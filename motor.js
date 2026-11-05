@@ -1,50 +1,88 @@
 
 window.LipiMotor = (() => {
     const tags = {
-        pagina:"div", cabecalho:"header", rodape:"footer",
-        conteudo:"main", secao:"section", titulo:"h1",
-        subtitulo:"h2", texto:"p", botao:"button",
-        caixa:"div", imagem:"img", link:"a",
-        entrada:"input", lista:"ul", item:"li"
+        pagina: "div",
+        cabecalho: "header",
+        rodape: "footer",
+        conteudo: "main",
+        secao: "section",
+        artigo: "article",
+        navegacao: "nav",
+        titulo: "h1",
+        subtitulo: "h2",
+        titulo3: "h3",
+        texto: "p",
+        paragrafo: "p",
+        botao: "button",
+        caixa: "div",
+        imagem: "img",
+        link: "a",
+        entrada: "input",
+        formulario: "form",
+        rotulo: "label",
+        lista: "ul",
+        item: "li",
+        quebra: "br",
+        linha: "hr",
+        video: "video"
     };
 
     const propriedades = {
-        fundo:"background",
-        cor:"color",
-        largura:"width",
-        altura:"height",
-        espacamento:"padding",
-        margem:"margin",
-        alinhamento:"text-align",
-        borda:"border",
-        raio:"border-radius",
-        sombra:"box-shadow",
-        tamanho:"font-size",
-        fonte:"font-family",
-        exibicao:"display",
-        direcao:"flex-direction",
-        justificacao:"justify-content",
-        itens:"align-items",
-        cursor:"cursor"
+        fundo: "background",
+        cor: "color",
+        largura: "width",
+        altura: "height",
+        espacamento: "padding",
+        margem: "margin",
+        alinhamento: "text-align",
+        borda: "border",
+        raio: "border-radius",
+        sombra: "box-shadow",
+        tamanho: "font-size",
+        fonte: "font-family",
+        exibicao: "display",
+        direcao: "flex-direction",
+        justificacao: "justify-content",
+        itens: "align-items",
+        cursor: "cursor",
+        opacidade: "opacity",
+        posicao: "position",
+        grade: "display",
+        coluna: "grid-column",
+        linhas: "line-height",
+        transicao: "transition",
+        preenchimento: "padding",
+        contorno: "outline",
+        estouro: "overflow",
+        minimo: "min-width",
+        maximo: "max-width"
     };
 
     const valores = {
-        centralizado:"center",
-        negrito:"bold",
-        branco:"white",
-        preto:"black",
-        azul:"blue",
-        vermelho:"red",
-        verde:"green",
-        transparente:"transparent"
+        centralizado: "center",
+        esquerda: "left",
+        direita: "right",
+        negrito: "bold",
+        branco: "white",
+        preto: "black",
+        azul: "blue",
+        vermelho: "red",
+        verde: "green",
+        transparente: "transparent",
+        flexivel: "flex",
+        grade: "grid",
+        nenhum: "none",
+        relativo: "relative",
+        absoluto: "absolute",
+        fixo: "fixed"
     };
 
     function traduzirHTML(codigo) {
         return codigo.replace(
-            /<\/?([a-zA-ZÀ-ÿ][\wÀ-ÿ-]*)\b/g,
-            (trecho, nome) => {
-                const tag = tags[nome.toLowerCase()];
-                return tag ? trecho.replace(nome, tag) : trecho;
+            /(<\/?)([a-zA-ZÀ-ÿ][\wÀ-ÿ-]*)/g,
+            (trecho, abertura, nome) => {
+                const traducao = tags[nome.toLowerCase()];
+                return traducao ? abertura + traducao : trecho;
             }
         );
     }
@@ -52,16 +90,16 @@ window.LipiMotor = (() => {
     function traduzirCSS(codigo) {
         let resultado = codigo;
 
-        for (const [pt, css] of Object.entries(propriedades)) {
+        for (const [portugues, css] of Object.entries(propriedades)) {
             resultado = resultado.replace(
-                new RegExp("\\b" + pt + "\\s*:", "gi"),
+                new RegExp("\\b" + portugues + "\\s*:", "gi"),
                 css + ":"
             );
         }
 
-        for (const [pt, css] of Object.entries(valores)) {
+        for (const [portugues, css] of Object.entries(valores)) {
             resultado = resultado.replace(
-                new RegExp("\\b" + pt + "\\b", "gi"),
+                new RegExp("\\b" + portugues + "\\b", "gi"),
                 css
             );
         }
@@ -70,38 +108,60 @@ window.LipiMotor = (() => {
     }
 
     function traduzirJS(codigo) {
-        return codigo.replace(/\bmostrar\s*\(/g, "console.log(")
-                     .replace(/\bshow\s*\(/g, "console.log(");
+        return codigo
+            .replace(/\bmostrar\s*\(/g, "console.log(")
+            .replace(/\bperguntar\s*\(/g, "prompt(")
+            .replace(/\balertar\s*\(/g, "alert(");
     }
 
     function montarProjeto(arquivos) {
-        const html = arquivos["index.html"] || arquivos["pagina.lhtml"] || "";
-        const css = arquivos["style.css"] || arquivos["estilo.lcss"] || "";
-        const js = arquivos["script.js"] || arquivos["codigo.ljs"] || "";
+        const html =
+            arquivos["pagina.lhtml"] ||
+            arquivos["index.html"] ||
+            "";
 
-        const pagina = html.includes("<!DOCTYPE")
-            ? html
-            : `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body>${traduzirHTML(html)}</body></html>`;
+        const css =
+            arquivos["estilo.lcss"] ||
+            arquivos["style.css"] ||
+            "";
 
-        const estilo = html.includes("<!DOCTYPE")
-            ? traduzirCSS(css)
-            : traduzirCSS(css);
+        const js =
+            arquivos["codigo.ljs"] ||
+            arquivos["script.js"] ||
+            "";
 
+        const pagina = traduzirHTML(html);
+        const estilo = traduzirCSS(css);
         const programa = traduzirJS(js);
 
-        const documento = new DOMParser().parseFromString(pagina, "text/html");
-        const style = documento.createElement("style");
-        style.textContent = estilo;
-        documento.head.appendChild(style);
-
-        const script = documento.createElement("script");
-        script.textContent = programa;
-        documento.body.appendChild(script);
-
-        return "<!DOCTYPE html>\n" + documento.documentElement.outerHTML;
+        return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+${estilo}
+</style>
+</head>
+<body>
+${pagina}
+<script>
+try {
+${programa}
+} catch (erro) {
+    document.body.insertAdjacentHTML(
+        "beforeend",
+        "<pre style='color:red'>Erro: " + String(erro.message) + "</pre>"
+    );
+}
+<\/script>
+</body>
+</html>`;
     }
 
     return {
+        tags,
+        propriedades,
         traduzirHTML,
         traduzirCSS,
         traduzirJS,
