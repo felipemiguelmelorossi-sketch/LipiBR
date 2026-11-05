@@ -4,32 +4,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#10131a">
-<title>LipiBR — Editor de programação</title>
-<link rel="icon" href="logo.svg" type="image/svg+xml">
-<style>
-:root {
-    --fundo: #10131a;
-    --painel: #181d27;
-    --painel2: #202735;
-    --borda: #303949;
-    --azul: #3987ff;
-    --texto: #edf2fa;
-    --secundario: #929daf;
-    --verde: #4bd69a;
-    --vermelho: #ff6875;
-}
+<meta name="theme-color" content="#1e1e1e">
+<title>LipiBR Studio</title>
 
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+
+<style>
 * {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    background: var(--fundo);
-    color: var(--texto);
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+    background: #1e1e1e;
+    color: #cccccc;
+    font-family: "Segoe UI", Arial, sans-serif;
 }
 
 button, input {
@@ -40,451 +32,1087 @@ button {
     cursor: pointer;
 }
 
-.topo {
-    height: 64px;
-    padding: 0 24px;
+.app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* BARRA SUPERIOR */
+
+.titlebar {
+    height: 35px;
+    background: #181818;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--borda);
-    background: var(--painel);
+    padding: 0 13px;
+    border-bottom: 1px solid #303030;
+    flex-shrink: 0;
 }
 
-.marca {
+.brand {
     display: flex;
     align-items: center;
-    gap: 11px;
-    font-size: 20px;
-    font-weight: 750;
-    letter-spacing: -.5px;
+    gap: 9px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .logo {
-    width: 36px;
-    height: 36px;
+    background: #1683d8;
+    color: white;
+    width: 21px;
+    height: 21px;
     display: grid;
     place-items: center;
-    border-radius: 9px;
-    background: var(--azul);
+    font-weight: bold;
+}
+
+.title-actions {
+    color: #999;
+    display: flex;
+    gap: 16px;
+}
+
+/* MENU */
+
+.menu {
+    height: 34px;
+    background: #181818;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 18px;
+    border-bottom: 1px solid #303030;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.menu span {
+    cursor: pointer;
+}
+
+.menu span:hover {
     color: white;
-    font-size: 22px;
-    font-weight: 800;
 }
 
-.marca small {
-    color: var(--secundario);
+/* PRINCIPAL */
+
+.workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+/* BARRA LATERAL DE ÍCONES */
+
+.activity {
+    width: 48px;
+    background: #181818;
+    border-right: 1px solid #303030;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 12px;
+    gap: 22px;
+    flex-shrink: 0;
+}
+
+.activity button {
+    background: transparent;
+    border: 0;
+    color: #858585;
+    font-size: 21px;
+}
+
+.activity button.active,
+.activity button:hover {
+    color: white;
+}
+
+/* EXPLORADOR */
+
+.sidebar {
+    width: 235px;
+    min-width: 150px;
+    background: #181818;
+    border-right: 1px solid #303030;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    height: 40px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font-size: 11px;
-    font-weight: 500;
-    margin-left: 5px;
+    font-weight: 700;
+    letter-spacing: .5px;
 }
 
-.acoes {
+.tools {
     display: flex;
     gap: 9px;
 }
 
-.botao {
-    border: 1px solid var(--borda);
-    background: var(--painel2);
-    color: var(--texto);
-    padding: 9px 14px;
-    border-radius: 7px;
-    font-size: 13px;
-    transition: .15s;
+.tools button {
+    border: 0;
+    background: transparent;
+    color: #aaa;
+    font-size: 16px;
 }
 
-.botao:hover {
-    border-color: var(--azul);
-    background: #273449;
-}
-
-.executar {
-    background: var(--azul);
-    border-color: var(--azul);
+.tools button:hover {
     color: white;
-    font-weight: 700;
 }
 
-.executar:hover {
-    background: #246bd5;
+.project-name {
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    border-bottom: 1px solid #292929;
 }
 
-.principal {
-    max-width: 1500px;
-    margin: auto;
-    padding: 25px;
+.file-tree {
+    flex: 1;
+    overflow: auto;
+    padding: 5px 0;
 }
 
-.cabecalho {
+.tree-item {
+    height: 25px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 19px;
-    gap: 15px;
+    gap: 7px;
+    padding-right: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
-.cabecalho h1 {
-    margin: 0 0 5px;
-    font-size: 23px;
+.tree-item:hover {
+    background: #2a2d2e;
 }
 
-.cabecalho p {
-    margin: 0;
-    color: var(--secundario);
-    font-size: 13px;
+.tree-item.active {
+    background: #37373d;
+    color: white;
 }
 
-.status {
+.tree-item .tree-icon {
+    color: #dcb878;
+    flex-shrink: 0;
+}
+
+.tree-item .tree-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tree-item .tree-actions {
+    display: none;
+    margin-left: auto;
+    color: #aaa;
+}
+
+.tree-item:hover .tree-actions {
+    display: inline;
+}
+
+/* EDITOR */
+
+.editor-section {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #1e1e1e;
+}
+
+.tabs {
+    height: 36px;
+    background: #181818;
+    display: flex;
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+
+.tab {
+    min-width: 115px;
+    max-width: 190px;
+    height: 36px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--secundario);
+    border-right: 1px solid #303030;
+    color: #999;
     font-size: 12px;
+    cursor: pointer;
 }
 
-.ponto {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #e5a63c;
+.tab.active {
+    background: #1e1e1e;
+    color: white;
+    border-top: 1px solid #1683d8;
 }
 
-.ponto.pronto {
-    background: var(--verde);
+.tab-close {
+    margin-left: auto;
+    color: #aaa;
 }
 
-.ponto.erro {
-    background: var(--vermelho);
-}
-
-.editor {
-    border: 1px solid var(--borda);
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--painel);
-}
-
-.editor-topo {
-    min-height: 47px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    border-bottom: 1px solid var(--borda);
-    gap: 10px;
-}
-
-.arquivo {
-    font-size: 13px;
-    color: var(--texto);
-}
-
-.arquivo span {
-    color: var(--azul);
-    margin-right: 8px;
-}
-
-.linguagem {
+.breadcrumb {
+    height: 27px;
+    padding: 6px 15px;
     font-size: 11px;
-    color: var(--secundario);
+    color: #999;
+    flex-shrink: 0;
 }
 
-.area-codigo {
-    display: flex;
-    min-height: 440px;
-    background: #121720;
-}
-
-.linhas {
-    width: 48px;
-    padding: 17px 12px;
-    text-align: right;
-    color: #657187;
-    background: #151b25;
-    border-right: 1px solid var(--borda);
-    font: 14px/24px Consolas, monospace;
-    user-select: none;
-    white-space: pre;
-    overflow: hidden;
-}
-
-#codigo {
+#editor {
     flex: 1;
-    width: 100%;
-    min-width: 0;
-    min-height: 440px;
-    resize: vertical;
-    border: 0;
-    outline: 0;
-    padding: 17px;
-    color: #dce8fa;
-    background: transparent;
-    font: 14px/24px Consolas, "Courier New", monospace;
-    tab-size: 4;
-    white-space: pre;
-    overflow: auto;
+    min-height: 100px;
 }
 
-#codigo::selection {
-    background: #315d91;
-}
+/* TERMINAL */
 
-.rodape-editor {
+.bottom {
+    height: 210px;
+    min-height: 100px;
     display: flex;
-    justify-content: space-between;
-    padding: 10px 15px;
-    color: var(--secundario);
-    font-size: 11px;
-    border-top: 1px solid var(--borda);
+    flex-direction: column;
+    background: #181818;
+    border-top: 1px solid #303030;
+    flex-shrink: 0;
 }
 
-.terminal {
-    margin-top: 18px;
-    border: 1px solid var(--borda);
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--painel);
-}
-
-.terminal-topo {
-    height: 44px;
-    padding: 0 16px;
+.bottom-header {
+    height: 37px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--borda);
-    font-size: 13px;
-    font-weight: 650;
+    padding: 0 15px;
+    border-bottom: 1px solid #303030;
 }
 
-.limpar {
-    border: 0;
+.bottom-tabs {
+    display: flex;
+    height: 100%;
+    gap: 20px;
+}
+
+.bottom-tabs button {
     background: transparent;
-    color: var(--secundario);
-    font-size: 12px;
+    border: 0;
+    color: #999;
+    font-size: 11px;
 }
 
-#saida {
-    min-height: 135px;
-    max-height: 300px;
+.bottom-tabs button.active {
+    color: white;
+    border-bottom: 1px solid #1683d8;
+}
+
+#terminal {
+    flex: 1;
     overflow: auto;
-    padding: 16px;
-    color: #c6d3e5;
-    font: 13px/22px Consolas, monospace;
+    padding: 12px 15px;
+    font: 12px/21px Consolas, monospace;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 
-.saida-erro {
-    color: var(--vermelho);
+.success {
+    color: #4ec9b0;
 }
 
-.saida-sistema {
-    color: var(--verde);
+.error {
+    color: #f48771;
 }
 
-.rodape {
-    text-align: center;
-    padding: 25px;
-    color: var(--secundario);
+.command {
+    color: #75baff;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* STATUS */
+
+.statusbar {
+    height: 23px;
+    flex-shrink: 0;
+    background: #007acc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    color: white;
     font-size: 11px;
 }
 
-@media(max-width:650px) {
-    .topo {
-        padding: 0 12px;
+.run {
+    background: #16834a;
+    color: white;
+    border: 0;
+    padding: 3px 11px;
+    font-size: 11px;
+}
+
+.run:hover {
+    background: #199957;
+}
+
+/* JANELA */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: #0009;
+    display: grid;
+    place-items: center;
+    z-index: 20;
+}
+
+.modal-box {
+    width: min(360px, 90%);
+    background: #252526;
+    border: 1px solid #555;
+    padding: 20px;
+}
+
+.modal-box h3 {
+    margin: 0 0 14px;
+    font-size: 15px;
+}
+
+.modal-box input {
+    width: 100%;
+    padding: 10px;
+    background: #181818;
+    color: white;
+    border: 1px solid #555;
+    outline: none;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.modal-actions button {
+    background: #333;
+    border: 1px solid #555;
+    color: white;
+    padding: 8px 12px;
+}
+
+.modal-actions button:last-child {
+    background: #007acc;
+    border-color: #007acc;
+}
+
+@media(max-width:700px) {
+    .sidebar {
+        width: 150px;
     }
 
-    .marca {
-        font-size: 17px;
+    .activity {
+        width: 37px;
     }
 
-    .marca small {
-        display: none;
+    .menu {
+        gap: 10px;
     }
 
-    .acoes {
-        gap: 5px;
-    }
-
-    .botao {
-        padding: 8px;
-        font-size: 11px;
-    }
-
-    .principal {
-        padding: 15px 10px;
-    }
-
-    .cabecalho {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .area-codigo, #codigo {
-        min-height: 370px;
+    .bottom {
+        height: 165px;
     }
 }
 </style>
 </head>
+
 <body>
+<div class="app">
 
-<header class="topo">
-    <div class="marca">
+<header class="titlebar">
+    <div class="brand">
         <div class="logo">L</div>
-        LipiBR <small>EDITOR DE CÓDIGO</small>
+        LipiBR Studio
     </div>
-
-    <div class="acoes">
-        <button class="botao" id="abrir">Abrir</button>
-        <button class="botao" id="salvar">Salvar</button>
-        <button class="botao executar" id="executar">▶ Executar</button>
+    <div class="title-actions">
+        <span>—</span>
+        <span>□</span>
+        <span>×</span>
     </div>
 </header>
 
-<main class="principal">
+<nav class="menu">
+    <span id="menu-file">Arquivo</span>
+    <span id="menu-edit">Editar</span>
+    <span id="menu-run">Executar</span>
+    <span id="menu-help">Ajuda</span>
+</nav>
 
-    <section class="cabecalho">
-        <div>
-            <h1>Editor LipiBR</h1>
-            <p>Escreva seu código, execute e veja o resultado.</p>
+<div class="workspace">
+
+    <aside class="activity">
+        <button class="active" title="Explorador">▤</button>
+        <button title="Pesquisar" id="search-button">⌕</button>
+        <button title="Arquivos">◫</button>
+    </aside>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            EXPLORADOR
+            <div class="tools">
+                <button id="new-file" title="Novo arquivo">＋</button>
+                <button id="new-folder" title="Nova pasta">▣</button>
+                <button id="import-file" title="Importar arquivo">↥</button>
+            </div>
         </div>
 
-        <div class="status">
-            <span class="ponto" id="ponto"></span>
-            <span id="estado">Carregando Python...</span>
-        </div>
-    </section>
+        <div class="project-name">⌄ LIPIBR</div>
+        <div class="file-tree" id="file-tree"></div>
+    </aside>
 
-    <section class="editor">
-        <div class="editor-topo">
-            <div class="arquivo"><span>●</span> programa.lp</div>
-            <div class="linguagem">LIPIBR</div>
-        </div>
+    <main class="editor-section">
+        <div class="tabs" id="tabs"></div>
+        <div class="breadcrumb" id="breadcrumb">LipiBR</div>
+        <div id="editor"></div>
+    </main>
 
-        <div class="area-codigo">
-            <div class="linhas" id="linhas">1</div>
-            <textarea id="codigo" spellcheck="false" autocapitalize="off" autocomplete="off">nome = perguntar("Qual é seu nome?")
+</div>
 
-se nome:
-    mostrar("Olá,", nome)
-senao:
-    mostrar("Você não digitou seu nome.")</textarea>
+<section class="bottom" id="bottom">
+    <div class="bottom-header">
+        <div class="bottom-tabs">
+            <button class="active" data-panel="terminal">TERMINAL</button>
+            <button data-panel="saida">SAÍDA</button>
+            <button data-panel="problemas">PROBLEMAS</button>
         </div>
 
-        <div class="rodape-editor">
-            <span>Arquivo .lp</span>
-            <span id="posicao">Linha 1</span>
-        </div>
-    </section>
+        <button id="clear-terminal"
+            style="background:none;border:0;color:#aaa">⌫</button>
+    </div>
 
-    <section class="terminal">
-        <div class="terminal-topo">
-            <span>Terminal de saída</span>
-            <button class="limpar" id="limpar">Limpar terminal</button>
-        </div>
-        <div id="saida">Aguardando inicialização...</div>
-    </section>
+    <div id="terminal"></div>
+</section>
 
-</main>
-
-<footer class="rodape">
-    LipiBR — Uma linguagem de programação em português.
+<footer class="statusbar">
+    <span id="motor-status">Carregando motor...</span>
+    <span id="file-status">LipiBR</span>
+    <button class="run" id="run">▶ Executar</button>
 </footer>
 
-<input type="file" id="arquivo" accept=".lp,.txt" hidden>
+</div>
 
-<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+<div class="modal hidden" id="modal">
+    <div class="modal-box">
+        <h3 id="modal-title">Novo arquivo</h3>
+        <input id="modal-input" autocomplete="off">
+        <div class="modal-actions">
+            <button id="modal-cancel">Cancelar</button>
+            <button id="modal-confirm">Criar</button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="file-input" accept=".lp,.txt,.py" hidden>
+
 <script>
-const codigo = document.getElementById("codigo");
-const saida = document.getElementById("saida");
-const estado = document.getElementById("estado");
-const ponto = document.getElementById("ponto");
-const linhas = document.getElementById("linhas");
+/* CONFIGURAÇÃO DO EDITOR */
 
+let editor;
 let pyodide = null;
-let ocupado = false;
+let executando = false;
+
+const arquivos = new Map();
+const abas = new Set();
+
+let arquivoAtual = "";
+let pastaAtual = "";
+let modalTipo = "arquivo";
+
+const comandos = [
+    {
+        label: "mostrar",
+        detail: "Exibe um texto ou valor no terminal.",
+        insertText: "mostrar(${1:\"Olá, mundo!\"})",
+        kind: "Function"
+    },
+    {
+        label: "perguntar",
+        detail: "Pede uma informação ao usuário.",
+        insertText: "perguntar(${1:\"Digite algo: \"})",
+        kind: "Function"
+    },
+    {
+        label: "se",
+        detail: "Executa código se a condição for verdadeira.",
+        insertText: "se ${1:condicao}:\n    ${2:mostrar(\"Sim\")}",
+        kind: "Snippet"
+    },
+    {
+        label: "senao",
+        detail: "Executa código quando a condição não é verdadeira.",
+        insertText: "senao:\n    ${1:mostrar(\"Não\")}",
+        kind: "Snippet"
+    },
+    {
+        label: "senaose",
+        detail: "Verifica outra condição.",
+        insertText: "senaose ${1:condicao}:\n    ${2:mostrar(\"Outro caso\")}",
+        kind: "Snippet"
+    },
+    {
+        label: "enquanto",
+        detail: "Repete enquanto uma condição for verdadeira.",
+        insertText: "enquanto ${1:condicao}:\n    ${2:mostrar(\"Repetindo\")}",
+        kind: "Snippet"
+    },
+    {
+        label: "para",
+        detail: "Percorre elementos ou repete instruções.",
+        insertText: "para ${1:item} em intervalo(${2:5}):\n    ${3:mostrar(item)}",
+        kind: "Snippet"
+    },
+    {
+        label: "definir",
+        detail: "Cria uma função.",
+        insertText: "definir ${1:nome}(${2:}):\n    ${3:retornar None}",
+        kind: "Snippet"
+    },
+    {
+        label: "retornar",
+        detail: "Devolve um valor de uma função.",
+        insertText: "retornar ${1:valor}",
+        kind: "Function"
+    },
+    {
+        label: "classe",
+        detail: "Cria uma classe.",
+        insertText: "classe ${1:MinhaClasse}:\n    definir __init__(self):\n        ${2:passar}",
+        kind: "Snippet"
+    },
+    {
+        label: "importar",
+        detail: "Importa um módulo.",
+        insertText: "importar ${1:math}",
+        kind: "Keyword"
+    },
+    {
+        label: "tentar",
+        detail: "Inicia tratamento de erros.",
+        insertText: "tentar:\n    ${1:mostrar(\"Teste\")}\nexceto ${2:Exception} como erro:\n    mostrar(erro)",
+        kind: "Snippet"
+    },
+    {
+        label: "lista",
+        detail: "Cria uma lista.",
+        insertText: "lista([${1:1, 2, 3}])",
+        kind: "Function"
+    },
+    {
+        label: "dicionario",
+        detail: "Cria um dicionário.",
+        insertText: "dicionario({${1:\"nome\": \"Felipe\"}})",
+        kind: "Function"
+    },
+    {
+        label: "intervalo",
+        detail: "Gera uma sequência de números.",
+        insertText: "intervalo(${1:5})",
+        kind: "Function"
+    },
+    {
+        label: "comprimento",
+        detail: "Retorna a quantidade de elementos.",
+        insertText: "comprimento(${1:lista})",
+        kind: "Function"
+    },
+    {
+        label: "texto",
+        detail: "Converte um valor em texto.",
+        insertText: "texto(${1:valor})",
+        kind: "Function"
+    },
+    {
+        label: "numero",
+        detail: "Converte um valor em número inteiro.",
+        insertText: "numero(${1:valor})",
+        kind: "Function"
+    },
+    {
+        label: "decimal",
+        detail: "Converte um valor em número decimal.",
+        insertText: "decimal(${1:valor})",
+        kind: "Function"
+    },
+    {
+        label: "verdadeiro",
+        detail: "Valor lógico verdadeiro.",
+        insertText: "verdadeiro",
+        kind: "Constant"
+    },
+    {
+        label: "falso",
+        detail: "Valor lógico falso.",
+        insertText: "falso",
+        kind: "Constant"
+    },
+    {
+        label: "nulo",
+        detail: "Representa a ausência de valor.",
+        insertText: "nulo",
+        kind: "Constant"
+    }
+];
+
+/* MONACO */
+
+require.config({
+    paths: {
+        vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs"
+    }
+});
+
+require(["vs/editor/editor.main"], function () {
+
+    monaco.languages.register({
+        id: "lipibr"
+    });
+
+    monaco.languages.setMonarchTokensProvider("lipibr", {
+        keywords: [
+            "se", "senao", "senaose", "enquanto", "para",
+            "em", "e", "ou", "nao", "não", "definir",
+            "retornar", "classe", "importar", "de", "como",
+            "tentar", "exceto", "finalmente", "com",
+            "mostrar", "perguntar", "parar", "continuar"
+        ],
+
+        tokenizer: {
+            root: [
+                [/#.*$/, "comment"],
+                [/"([^"\\]|\\.)*"/, "string"],
+                [/'([^'\\]|\\.)*'/, "string"],
+                [/\b\d+(\.\d+)?\b/, "number"],
+                [/[a-zA-Z_À-ÿ][\wÀ-ÿ]*/, {
+                    cases: {
+                        "@keywords": "keyword",
+                        "@default": "identifier"
+                    }
+                }],
+                [/[{}()[\]]/, "@brackets"],
+                [/[,:.]/, "delimiter"],
+                [/[=+\-*\/<>!]+/, "operator"]
+            ]
+        }
+    });
+
+    monaco.editor.defineTheme("lipibr-dark", {
+        base: "vs-dark",
+        inherit: true,
+        rules: [
+            {token: "keyword", foreground: "569CD6"},
+            {token: "string", foreground: "CE9178"},
+            {token: "comment", foreground: "6A9955"},
+            {token: "number", foreground: "B5CEA8"}
+        ],
+        colors: {
+            "editor.background": "#1e1e1e",
+            "editorLineNumber.foreground": "#858585",
+            "editorCursor.foreground": "#ffffff",
+            "editor.selectionBackground": "#264f78",
+            "editor.lineHighlightBackground": "#252526"
+        }
+    });
+
+    editor = monaco.editor.create(
+        document.getElementById("editor"),
+        {
+            value: "",
+            language: "lipibr",
+            theme: "lipibr-dark",
+            automaticLayout: true,
+            fontSize: 14,
+            fontFamily: "Consolas, monospace",
+            minimap: {
+                enabled: true
+            },
+            lineNumbers: "on",
+            roundedSelection: false,
+            scrollBeyondLastLine: false,
+            tabSize: 4,
+            insertSpaces: true,
+            wordWrap: "off",
+            suggestOnTriggerCharacters: true,
+            quickSuggestions: true,
+            folding: true,
+            bracketPairColorization: {
+                enabled: true
+            }
+        }
+    );
+
+    monaco.languages.registerCompletionItemProvider("lipibr", {
+        provideCompletionItems: function () {
+            return {
+                suggestions: comandos.map(comando => ({
+                    label: comando.label,
+                    kind: monaco.languages.CompletionItemKind[
+                        comando.kind
+                    ] || monaco.languages.CompletionItemKind.Function,
+                    insertText: comando.insertText,
+                    insertTextRules:
+                        monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    detail: comando.detail,
+                    documentation: comando.detail
+                }))
+            };
+        }
+    });
+
+    editor.addCommand(
+        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+        executarCodigo
+    );
+
+    abrirArquivo("programa.lp");
+    iniciarMotor();
+});
+
+/* ARQUIVOS E PASTAS */
+
+function caminho(nome) {
+    return pastaAtual ? pastaAtual + "/" + nome : nome;
+}
+
+function salvarDados() {
+    try {
+        localStorage.setItem(
+            "lipibr_projeto",
+            JSON.stringify([...arquivos.entries()])
+        );
+    } catch (erro) {
+        escrever("Erro ao salvar os dados no navegador.", "error");
+    }
+}
+
+function carregarDados() {
+    try {
+        const dados = JSON.parse(
+            localStorage.getItem("lipibr_projeto") || "null"
+        );
+
+        if (Array.isArray(dados)) {
+            arquivos.clear();
+
+            dados.forEach(([nome, conteudo]) => {
+                if (typeof nome === "string" &&
+                    typeof conteudo === "string") {
+                    arquivos.set(nome, conteudo);
+                }
+            });
+        }
+    } catch (erro) {
+        arquivos.clear();
+    }
+
+    if (arquivos.size === 0) {
+        arquivos.set(
+            "programa.lp",
+            'mostrar("Olá, mundo!")\n'
+        );
+
+        arquivos.set(
+            "exemplos/inicio.lp",
+            'mostrar("Bem-vindo à LipiBR!")\n'
+        );
+    }
+}
+
+function criarArquivo(nome) {
+    if (!nome || !/^[a-zA-Z0-9À-ÿ_.-]+\.lp$/.test(nome)) {
+        escrever("Nome inválido. Use um arquivo .lp.", "error");
+        return;
+    }
+
+    const local = caminho(nome);
+
+    if (arquivos.has(local)) {
+        escrever("Esse arquivo já existe.", "error");
+        return;
+    }
+
+    arquivos.set(local, "");
+    salvarDados();
+    abrirArquivo(local);
+    renderizarArvore();
+}
+
+function criarPasta(nome) {
+    if (!nome || !/^[a-zA-Z0-9À-ÿ_-]+$/.test(nome)) {
+        escrever("Nome de pasta inválido.", "error");
+        return;
+    }
+
+    const local = caminho(nome) + "/.pasta";
+
+    if (arquivos.has(local)) {
+        escrever("Essa pasta já existe.", "error");
+        return;
+    }
+
+    arquivos.set(local, "");
+    salvarDados();
+    renderizarArvore();
+
+    escrever("Pasta criada: " + caminho(nome), "success");
+}
+
+function renderizarArvore() {
+    const raiz = document.getElementById("file-tree");
+    raiz.innerHTML = "";
+
+    const pastas = new Map();
+    const nomes = [...arquivos.keys()].sort();
+
+    for (const nome of nomes) {
+        const partes = nome.split("/");
+        let atual = pastas;
+
+        for (let i = 0; i < partes.length; i++) {
+            const parte = partes[i];
+
+            if (parte === ".pasta") continue;
+
+            if (!atual.has(parte)) {
+                atual.set(parte, {
+                    filhos: new Map(),
+                    caminho: partes.slice(0, i + 1).join("/")
+                });
+            }
+
+            if (i < partes.length - 1) {
+                atual = atual.get(parte).filhos;
+            }
+        }
+    }
+
+    function desenhar(objeto, elemento, nivel = 0) {
+        for (const [nome, dados] of objeto) {
+            const item = document.createElement("div");
+            const ehPasta = dados.filhos.size > 0 ||
+                [...arquivos.keys()].some(
+                    x => x.startsWith(dados.caminho + "/")
+                );
+
+            item.className = "tree-item" +
+                (arquivoAtual === dados.caminho ? " active" : "");
+
+            item.style.paddingLeft = (12 + nivel * 15) + "px";
+
+            const icone = document.createElement("span");
+            icone.className = "tree-icon";
+            icone.textContent = ehPasta ? "▸" :
+                nome.endsWith(".lp") ? "λ" : "•";
+
+            const texto = document.createElement("span");
+            texto.className = "tree-name";
+            texto.textContent = nome;
+
+            item.append(icone, texto);
+
+            if (!ehPasta) {
+                item.addEventListener("click", () => {
+                    abrirArquivo(dados.caminho);
+                });
+            } else {
+                item.addEventListener("click", () => {
+                    dados.aberta = !dados.aberta;
+                    icone.textContent = dados.aberta ? "▾" : "▸";
+                    const filhos = item.nextElementSibling;
+                    if (filhos) filhos.classList.toggle("hidden");
+                });
+            }
+
+            elemento.appendChild(item);
+
+            if (ehPasta) {
+                const filhos = document.createElement("div");
+                desenhar(dados.filhos, filhos, nivel + 1);
+                elemento.appendChild(filhos);
+            }
+        }
+    }
+
+    desenhar(pastas, raiz);
+}
+
+function abrirArquivo(nome) {
+    if (!arquivos.has(nome)) return;
+
+    arquivoAtual = nome;
+    abas.add(nome);
+
+    if (editor) {
+        editor.setValue(arquivos.get(nome));
+        editor.focus();
+    }
+
+    document.getElementById("breadcrumb").textContent =
+        "LipiBR / " + nome;
+
+    document.getElementById("file-status").textContent = nome;
+
+    renderizarArvore();
+    renderizarAbas();
+}
+
+function renderizarAbas() {
+    const elemento = document.getElementById("tabs");
+    elemento.innerHTML = "";
+
+    for (const nome of abas) {
+        const tab = document.createElement("div");
+        tab.className = "tab" +
+            (nome === arquivoAtual ? " active" : "");
+
+        const texto = document.createElement("span");
+        texto.textContent = nome.split("/").pop();
+
+        const fechar = document.createElement("span");
+        fechar.className = "tab-close";
+        fechar.textContent = "×";
+
+        fechar.addEventListener("click", event => {
+            event.stopPropagation();
+            abas.delete(nome);
+
+            if (nome === arquivoAtual) {
+                const proxima = [...abas].pop();
+
+                if (proxima) {
+                    abrirArquivo(proxima);
+                } else {
+                    arquivoAtual = "";
+                    editor.setValue("");
+                    document.getElementById("breadcrumb")
+                        .textContent = "Nenhum arquivo aberto";
+                }
+            }
+
+            renderizarAbas();
+        });
+
+        tab.append(texto, fechar);
+
+        tab.addEventListener("click", () => {
+            abrirArquivo(nome);
+        });
+
+        elemento.appendChild(tab);
+    }
+}
+
+function salvarArquivo() {
+    if (!arquivoAtual || !editor) {
+        escrever("Nenhum arquivo aberto.", "error");
+        return;
+    }
+
+    arquivos.set(arquivoAtual, editor.getValue());
+    salvarDados();
+
+    escrever("Arquivo salvo: " + arquivoAtual, "success");
+}
+
+function baixarArquivo() {
+    if (!arquivoAtual || !editor) return;
+
+    arquivos.set(arquivoAtual, editor.getValue());
+    salvarDados();
+
+    const blob = new Blob(
+        [editor.getValue()],
+        {type: "text/plain;charset=utf-8"}
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = arquivoAtual.split("/").pop();
+    link.click();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function baixarProjeto() {
+    const lista = [...arquivos.entries()]
+        .filter(([nome]) => !nome.endsWith("/.pasta"));
+
+    if (!lista.length) return;
+
+    escrever(
+        "Para baixar o projeto completo com pastas, use a opção de exportação ZIP quando ela estiver disponível.",
+        "error"
+    );
+}
+
+/* TERMINAL */
 
 function escrever(texto, classe = "") {
     const elemento = document.createElement("div");
     elemento.textContent = texto;
     if (classe) elemento.className = classe;
-    saida.appendChild(elemento);
-    saida.scrollTop = saida.scrollHeight;
+
+    document.getElementById("terminal").appendChild(elemento);
+    document.getElementById("terminal").scrollTop =
+        document.getElementById("terminal").scrollHeight;
 }
 
-function atualizarLinhas() {
-    const quantidade = codigo.value.split("\n").length;
-    linhas.textContent = Array.from(
-        {length: quantidade},
-        (_, i) => i + 1
-    ).join("\n");
-
-    const linhaAtual =
-        codigo.value.substring(0, codigo.selectionStart)
-        .split("\n").length;
-
-    document.getElementById("posicao").textContent =
-        "Linha " + linhaAtual;
+function limparTerminal() {
+    document.getElementById("terminal").innerHTML = "";
 }
 
-codigo.addEventListener("input", atualizarLinhas);
+/* MOTOR PYTHON */
 
-codigo.addEventListener("click", atualizarLinhas);
-codigo.addEventListener("keyup", atualizarLinhas);
-
-codigo.addEventListener("scroll", () => {
-    linhas.scrollTop = codigo.scrollTop;
-});
-
-codigo.addEventListener("keydown", event => {
-    if (event.key === "Tab") {
-        event.preventDefault();
-
-        const inicio = codigo.selectionStart;
-        const fim = codigo.selectionEnd;
-
-        codigo.setRangeText("    ", inicio, fim, "end");
-        atualizarLinhas();
-    }
-
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-        executarCodigo();
-    }
-});
-
-async function iniciar() {
+async function iniciarMotor() {
     try {
         pyodide = await loadPyodide();
 
         const resposta = await fetch("./interpretador.py");
 
         if (!resposta.ok) {
-            throw new Error(
-                "Não foi possível carregar interpretador.py"
-            );
+            throw new Error("Não foi possível carregar interpretador.py");
         }
 
-        const interpretador = await resposta.text();
+        const fonte = await resposta.text();
 
-        await pyodide.runPythonAsync(interpretador);
+        await pyodide.runPythonAsync(fonte);
 
         pyodide.setStdout({
             batched: texto => escrever(texto)
         });
 
         pyodide.setStderr({
-            batched: texto => escrever(texto, "saida-erro")
+            batched: texto => escrever(texto, "error")
         });
 
         pyodide.globals.set(
             "lipi_input",
-            pergunta => {
-                const resposta = window.prompt(
-                    String(pergunta ?? "")
-                );
-                return resposta ?? "";
-            }
+            pergunta => window.prompt(String(pergunta ?? "")) ?? ""
         );
 
         await pyodide.runPythonAsync(`
@@ -492,106 +1120,241 @@ import builtins
 builtins.input = lipi_input
 `);
 
-        estado.textContent = "Motor pronto";
-        ponto.className = "ponto pronto";
-        saida.textContent = "";
-        escrever("LipiBR inicializada com sucesso.", "saida-sistema");
+        document.getElementById("motor-status").textContent =
+            "● LipiBR pronta";
+
+        escrever("Motor LipiBR carregado.", "success");
 
     } catch (erro) {
-        estado.textContent = "Erro ao carregar";
-        ponto.className = "ponto erro";
-        saida.textContent = "";
-        escrever(String(erro), "saida-erro");
+        document.getElementById("motor-status").textContent =
+            "● Erro no motor";
+
+        escrever(String(erro), "error");
     }
 }
 
 async function executarCodigo() {
     if (!pyodide) {
-        escrever("O motor ainda está carregando.", "saida-erro");
+        escrever("O motor ainda está carregando.", "error");
         return;
     }
 
-    if (ocupado) return;
+    if (!arquivoAtual || !arquivoAtual.endsWith(".lp")) {
+        escrever("Abra um arquivo .lp para executar.", "error");
+        return;
+    }
 
-    ocupado = true;
-    document.getElementById("executar").disabled = true;
+    if (executando) return;
 
-    saida.textContent = "";
-    escrever("Executando programa.lp...", "saida-sistema");
+    executando = true;
+
+    salvarSilencioso();
+
+    const botao = document.getElementById("run");
+    botao.disabled = true;
+
+    document.getElementById("motor-status").textContent =
+        "● Executando...";
+
+    escrever("");
+    escrever("> " + arquivoAtual, "command");
 
     try {
-        pyodide.globals.set("codigo_usuario", codigo.value);
+        pyodide.globals.set(
+            "codigo_usuario",
+            editor.getValue()
+        );
+
+        pyodide.globals.set(
+            "nome_arquivo_lipibr",
+            arquivoAtual
+        );
 
         await pyodide.runPythonAsync(`
 ambiente_lipibr = {
     "__name__": "__main__"
 }
 
-codigo_traduzido = traduzir(codigo_usuario)
-
 exec(
-    compile(codigo_traduzido, "<programa.lp>", "exec"),
+    compile(
+        traduzir(codigo_usuario),
+        nome_arquivo_lipibr,
+        "exec"
+    ),
     ambiente_lipibr
 )
 `);
 
-        escrever("Programa finalizado.", "saida-sistema");
+        escrever("Execução concluída.", "success");
 
     } catch (erro) {
-        escrever(String(erro), "saida-erro");
+        escrever(String(erro), "error");
     } finally {
-        ocupado = false;
-        document.getElementById("executar").disabled = false;
+        executando = false;
+        botao.disabled = false;
+
+        document.getElementById("motor-status").textContent =
+            "● LipiBR pronta";
     }
 }
 
-document.getElementById("executar")
-    .addEventListener("click", executarCodigo);
+function salvarSilencioso() {
+    if (!arquivoAtual || !editor) return;
 
-document.getElementById("limpar")
-    .addEventListener("click", () => {
-        saida.textContent = "";
-    });
+    arquivos.set(arquivoAtual, editor.getValue());
+    salvarDados();
+}
 
-document.getElementById("abrir")
-    .addEventListener("click", () => {
-        document.getElementById("arquivo").click();
-    });
+/* JANELAS */
 
-document.getElementById("arquivo")
-    .addEventListener("change", async event => {
+function abrirModal(tipo) {
+    modalTipo = tipo;
+
+    document.getElementById("modal-title").textContent =
+        tipo === "arquivo" ? "Novo arquivo" : "Nova pasta";
+
+    document.getElementById("modal-input").value = "";
+
+    document.getElementById("modal").classList.remove("hidden");
+    document.getElementById("modal-input").focus();
+}
+
+function confirmarModal() {
+    const nome = document.getElementById("modal-input")
+        .value.trim();
+
+    if (modalTipo === "arquivo") {
+        criarArquivo(nome);
+    } else {
+        criarPasta(nome);
+    }
+
+    document.getElementById("modal").classList.add("hidden");
+}
+
+/* EVENTOS */
+
+document.getElementById("new-file").onclick =
+    () => abrirModal("arquivo");
+
+document.getElementById("new-folder").onclick =
+    () => abrirModal("pasta");
+
+document.getElementById("modal-confirm").onclick =
+    confirmarModal;
+
+document.getElementById("modal-cancel").onclick = () => {
+    document.getElementById("modal").classList.add("hidden");
+};
+
+document.getElementById("modal-input").addEventListener(
+    "keydown",
+    event => {
+        if (event.key === "Enter") confirmarModal();
+        if (event.key === "Escape") {
+            document.getElementById("modal").classList.add("hidden");
+        }
+    }
+);
+
+document.getElementById("import-file").onclick = () => {
+    document.getElementById("file-input").click();
+};
+
+document.getElementById("file-input").addEventListener(
+    "change",
+    async event => {
         const arquivo = event.target.files[0];
+
         if (!arquivo) return;
 
-        codigo.value = await arquivo.text();
-        atualizarLinhas();
+        const nome = arquivo.name;
 
-        escrever(
-            "Arquivo " + arquivo.name + " carregado.",
-            "saida-sistema"
-        );
-    });
+        if (!/\.(lp|txt|py)$/.test(nome)) {
+            escrever("Formato não permitido.", "error");
+            return;
+        }
 
-document.getElementById("salvar")
-    .addEventListener("click", () => {
-        const arquivo = new Blob(
-            [codigo.value],
-            {type: "text/plain;charset=utf-8"}
-        );
+        arquivos.set(nome, await arquivo.text());
+        salvarDados();
+        abrirArquivo(nome);
 
-        const url = URL.createObjectURL(arquivo);
-        const link = document.createElement("a");
+        escrever("Arquivo importado: " + nome, "success");
+        event.target.value = "";
+    }
+);
 
-        link.href = url;
-        link.download = "programa.lp";
-        link.click();
+document.getElementById("run").onclick = executarCodigo;
 
-        URL.revokeObjectURL(url);
-    });
+document.getElementById("clear-terminal").onclick =
+    limparTerminal;
 
-atualizarLinhas();
-iniciar();
+document.getElementById("menu-file").onclick = () => {
+    const opcao = prompt(
+        "ARQUIVO\n1 - Novo arquivo\n2 - Nova pasta\n3 - Salvar\n4 - Baixar arquivo"
+    );
+
+    if (opcao === "1") abrirModal("arquivo");
+    if (opcao === "2") abrirModal("pasta");
+    if (opcao === "3") salvarArquivo();
+    if (opcao === "4") baixarArquivo();
+};
+
+document.getElementById("menu-run").onclick =
+    executarCodigo;
+
+document.getElementById("menu-edit").onclick = () => {
+    alert("Use Ctrl+A para selecionar tudo e Ctrl+S para salvar.");
+};
+
+document.getElementById("menu-help").onclick = () => {
+    alert(
+        "LipiBR Studio\nCtrl+S: salvar\nCtrl+Enter: executar\nCtrl+Espaço: sugestões de código"
+    );
+};
+
+document.getElementById("search-button").onclick = () => {
+    const termo = prompt("Qual arquivo deseja procurar?");
+
+    if (!termo) return;
+
+    const encontrado = [...arquivos.keys()].find(
+        nome => nome.toLowerCase().includes(termo.toLowerCase())
+    );
+
+    if (encontrado) abrirArquivo(encontrado);
+    else escrever("Arquivo não encontrado.", "error");
+};
+
+document.querySelectorAll(".bottom-tabs button").forEach(botao => {
+    botao.onclick = () => {
+        document.querySelectorAll(".bottom-tabs button")
+            .forEach(item => item.classList.remove("active"));
+
+        botao.classList.add("active");
+
+        const painel = botao.dataset.panel;
+
+        if (painel === "saida") {
+            escrever("A saída dos programas aparece no terminal.");
+        }
+
+        if (painel === "problemas") {
+            escrever("Os erros de execução aparecem aqui.");
+        }
+    };
+});
+
+document.addEventListener("keydown", event => {
+    if ((event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        salvarArquivo();
+    }
+});
+
+carregarDados();
+renderizarArvore();
 </script>
-
 </body>
 </html>
