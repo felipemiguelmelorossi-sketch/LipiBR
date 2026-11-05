@@ -1,64 +1,363 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LipiBR Studio</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LipiBR Studio</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #1e1e1e;
+    color: #cccccc;
+    font-family: "Segoe UI", Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+}
+
+button {
+    cursor: pointer;
+    color: inherit;
+    border: none;
+    font: inherit;
+}
+
+.topbar {
+    height: 38px;
+    background: #181818;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-bottom: 1px solid #303030;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.logo-icon {
+    background: #087acc;
+    color: white;
+    padding: 3px 8px;
+    font-weight: bold;
+}
+
+.acoes {
+    display: flex;
+    gap: 7px;
+}
+
+.acoes button {
+    background: #333333;
+    padding: 5px 12px;
+    font-size: 12px;
+    border: 1px solid #444;
+}
+
+.acoes button:hover {
+    background: #454545;
+}
+
+.acoes .executar {
+    background: #087acc;
+    border-color: #087acc;
+    color: white;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 48px 220px minmax(300px, 1fr) minmax(280px, 38%);
+    height: calc(100vh - 38px);
+}
+
+.atividade {
+    background: #181818;
+    border-right: 1px solid #303030;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 15px;
+    gap: 22px;
+    color: #858585;
+    font-size: 21px;
+}
+
+.atividade span {
+    cursor: pointer;
+}
+
+.atividade span:hover {
+    color: white;
+}
+
+.explorador {
+    background: #181818;
+    border-right: 1px solid #303030;
+    overflow-y: auto;
+}
+
+.explorador-titulo {
+    padding: 16px 14px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.pasta {
+    padding: 9px 12px;
+    font-size: 12px;
+    color: #cccccc;
+}
+
+.arquivos {
+    padding: 3px 0;
+}
+
+.arquivo {
+    width: 100%;
+    display: block;
+    text-align: left;
+    padding: 8px 14px 8px 25px;
+    font-size: 12px;
+    background: transparent;
+}
+
+.arquivo:hover {
+    background: #252526;
+}
+
+.arquivo.ativo {
+    background: #37373d;
+    color: #ffffff;
+}
+
+.editor-area {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #1e1e1e;
+}
+
+.abas {
+    display: flex;
+    height: 36px;
+    background: #181818;
+    border-bottom: 1px solid #303030;
+    overflow-x: auto;
+}
+
+.aba {
+    padding: 10px 16px;
+    font-size: 12px;
+    background: #1e1e1e;
+    border-right: 1px solid #303030;
+    border-top: 1px solid #087acc;
+    white-space: nowrap;
+}
+
+.editor {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.numeros {
+    width: 48px;
+    padding: 14px 10px;
+    color: #858585;
+    text-align: right;
+    font: 13px/22px Consolas, monospace;
+    white-space: pre;
+    overflow: hidden;
+    user-select: none;
+}
+
+#codigo {
+    flex: 1;
+    min-width: 0;
+    resize: none;
+    outline: none;
+    border: none;
+    background: transparent;
+    color: #d4d4d4;
+    padding: 14px 10px;
+    font: 13px/22px Consolas, monospace;
+    white-space: pre;
+    overflow: auto;
+    tab-size: 4;
+}
+
+#codigo::selection {
+    background: #264f78;
+}
+
+.terminal {
+    height: 155px;
+    flex-shrink: 0;
+    background: #181818;
+    border-top: 1px solid #303030;
+    overflow: auto;
+}
+
+.terminal-topo {
+    height: 35px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 15px;
+    border-bottom: 1px solid #303030;
+    font-size: 11px;
+    letter-spacing: .5px;
+}
+
+.terminal-topo span:first-child {
+    color: white;
+    border-bottom: 1px solid #087acc;
+    height: 35px;
+    display: flex;
+    align-items: center;
+}
+
+#saida {
+    padding: 12px 15px;
+    color: #cccccc;
+    font: 12px/20px Consolas, monospace;
+    white-space: pre-wrap;
+}
+
+.visualizacao {
+    min-width: 0;
+    background: #181818;
+    border-left: 1px solid #303030;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-topo {
+    height: 36px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 11px;
+    border-bottom: 1px solid #303030;
+}
+
+.preview-topo button {
+    background: #333333;
+    padding: 5px 9px;
+    font-size: 11px;
+}
+
+#preview {
+    flex: 1;
+    width: 100%;
+    background: white;
+    border: none;
+}
+
+@media(max-width: 900px) {
+    .layout {
+        grid-template-columns: 40px 160px 1fr;
+    }
+
+    .visualizacao {
+        display: none;
+    }
+}
+
+@media(max-width: 600px) {
+    .layout {
+        grid-template-columns: 35px 1fr;
+    }
+
+    .explorador {
+        display: none;
+    }
+}
+</style>
 </head>
+
 <body>
 
-    <header class="topo">
-        <div class="marca">
-            <span class="logo">L</span>
-            <span>LipiBR Studio</span>
+<header class="topbar">
+    <div class="logo">
+        <span class="logo-icon">L</span>
+        <span>LipiBR Studio</span>
+    </div>
+
+    <div class="acoes">
+        <button id="novoArquivo">+ Novo</button>
+        <button id="salvar">Salvar</button>
+        <button class="executar" id="executar">▶ Executar</button>
+    </div>
+</header>
+
+<main class="layout">
+
+    <aside class="atividade">
+        <span title="Explorador">▤</span>
+        <span title="Pesquisar">⌕</span>
+        <span title="Extensões">▦</span>
+    </aside>
+
+    <aside class="explorador">
+        <div class="explorador-titulo">EXPLORADOR</div>
+        <div class="pasta">▼ 📁 MEU PROJETO</div>
+
+        <div class="arquivos" id="arquivos">
+            <button class="arquivo ativo" data-arquivo="pagina.lhtml">🌐 pagina.lhtml</button>
+            <button class="arquivo" data-arquivo="estilo.lcss">🎨 estilo.lcss</button>
+            <button class="arquivo" data-arquivo="codigo.ljs">JS codigo.ljs</button>
+        </div>
+    </aside>
+
+    <section class="editor-area">
+        <div class="abas">
+            <div class="aba" id="abaAtual">pagina.lhtml</div>
         </div>
 
-        <div class="acoes">
-            <button id="novoArquivo">Novo arquivo</button>
-            <button id="executar">▶ Executar</button>
-            <button id="salvar">Salvar</button>
+        <div class="editor">
+            <div class="numeros" id="numeros">1</div>
+            <textarea id="codigo" spellcheck="false"
+                autocomplete="off" autocapitalize="off"></textarea>
         </div>
-    </header>
 
-    <main class="interface">
-        <aside class="explorador">
-            <h3>EXPLORADOR</h3>
-            <div class="pasta">📁 MEU PROJETO</div>
-
-            <div id="arquivos">
-                <button class="arquivo ativo" data-arquivo="pagina.lhtml">🌐 pagina.lhtml</button>
-                <button class="arquivo" data-arquivo="estilo.lcss">🎨 estilo.lcss</button>
-                <button class="arquivo" data-arquivo="codigo.ljs">JS codigo.ljs</button>
+        <div class="terminal">
+            <div class="terminal-topo">
+                <span>TERMINAL</span>
+                <span>SAÍDA</span>
+                <span>PROBLEMAS</span>
             </div>
-        </aside>
+            <pre id="saida">LipiBR Studio iniciado.
+Pronto para executar seu projeto.</pre>
+        </div>
+    </section>
 
-        <section class="editor-area">
-            <div class="abas" id="abas">
-                <div class="aba ativa">pagina.lhtml</div>
-            </div>
+    <section class="visualizacao">
+        <div class="preview-topo">
+            <span>PRÉ-VISUALIZAÇÃO</span>
+            <button id="atualizar">↻ Atualizar</button>
+        </div>
+        <iframe id="preview" sandbox="allow-scripts"></iframe>
+    </section>
 
-            <div class="editor">
-                <div class="numeros" id="numeros">1</div>
-                <textarea id="codigo" spellcheck="false"></textarea>
-            </div>
+</main>
 
-            <div class="terminal">
-                <div class="terminal-titulo">TERMINAL</div>
-                <pre id="saida">LipiBR Studio iniciado.</pre>
-            </div>
-        </section>
+<script src="motor.js"></script>
+<script src="studio.js"></script>
 
-        <section class="visualizacao">
-            <div class="preview-titulo">
-                <span>PRÉ-VISUALIZAÇÃO</span>
-                <button id="atualizar">↻ Atualizar</button>
-            </div>
-            <iframe id="preview" sandbox="allow-scripts"></iframe>
-        </section>
-    </main>
-
-    <script src="motor.js"></script>
-    <script src="studio.js"></script>
 </body>
 </html>
