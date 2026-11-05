@@ -1,10 +1,11 @@
-
 window.LipiMotor = (() => {
+
     const tags = {
+        site: "div",
         pagina: "div",
         cabecalho: "header",
         rodape: "footer",
-        conteudo: "main",
+        principal: "main",
         secao: "section",
         artigo: "article",
         navegacao: "nav",
@@ -27,13 +28,26 @@ window.LipiMotor = (() => {
         video: "video"
     };
 
+    const atributos = {
+        identificador: "id",
+        classe: "class",
+        destino: "href",
+        tipo: "type",
+        dica: "placeholder",
+        alternativa: "alt",
+        largura: "width",
+        altura: "height",
+        valor: "value",
+        nome: "name"
+    };
+
     const propriedades = {
         fundo: "background",
         cor: "color",
         largura: "width",
         altura: "height",
-        espacamento: "padding",
         margem: "margin",
+        espacamento: "padding",
         alinhamento: "text-align",
         borda: "border",
         raio: "border-radius",
@@ -47,13 +61,11 @@ window.LipiMotor = (() => {
         cursor: "cursor",
         opacidade: "opacity",
         posicao: "position",
-        grade: "display",
-        coluna: "grid-column",
-        linhas: "line-height",
-        transicao: "transition",
         preenchimento: "padding",
         contorno: "outline",
         estouro: "overflow",
+        transicao: "transition",
+        linhas: "line-height",
         minimo: "min-width",
         maximo: "max-width"
     };
@@ -65,9 +77,6 @@ window.LipiMotor = (() => {
         negrito: "bold",
         branco: "white",
         preto: "black",
-        azul: "blue",
-        vermelho: "red",
-        verde: "green",
         transparente: "transparent",
         flexivel: "flex",
         grade: "grid",
@@ -84,6 +93,9 @@ window.LipiMotor = (() => {
                 const traducao = tags[nome.toLowerCase()];
                 return traducao ? abertura + traducao : trecho;
             }
+        ).replace(
+            /\b(identificador|classe|destino|tipo|dica|alternativa|largura|altura|valor|nome)\s*=/gi,
+            (trecho, nome) => atributos[nome.toLowerCase()] + "="
         );
     }
 
@@ -91,17 +103,13 @@ window.LipiMotor = (() => {
         let resultado = codigo;
 
         for (const [portugues, css] of Object.entries(propriedades)) {
-            resultado = resultado.replace(
-                new RegExp("\\b" + portugues + "\\s*:", "gi"),
-                css + ":"
-            );
+            const regra = new RegExp("\\b" + portugues + "\\s*:", "gi");
+            resultado = resultado.replace(regra, css + ":");
         }
 
         for (const [portugues, css] of Object.entries(valores)) {
-            resultado = resultado.replace(
-                new RegExp("\\b" + portugues + "\\b", "gi"),
-                css
-            );
+            const regra = new RegExp("\\b" + portugues + "\\b", "gi");
+            resultado = resultado.replace(regra, css);
         }
 
         return resultado;
@@ -110,29 +118,15 @@ window.LipiMotor = (() => {
     function traduzirJS(codigo) {
         return codigo
             .replace(/\bmostrar\s*\(/g, "console.log(")
+            .replace(/\balertar\s*\(/g, "alert(")
             .replace(/\bperguntar\s*\(/g, "prompt(")
-            .replace(/\balertar\s*\(/g, "alert(");
+            .replace(/\bobterElemento\s*\(/g, "document.getElementById(");
     }
 
     function montarProjeto(arquivos) {
-        const html =
-            arquivos["pagina.lhtml"] ||
-            arquivos["index.html"] ||
-            "";
-
-        const css =
-            arquivos["estilo.lcss"] ||
-            arquivos["style.css"] ||
-            "";
-
-        const js =
-            arquivos["codigo.ljs"] ||
-            arquivos["script.js"] ||
-            "";
-
-        const pagina = traduzirHTML(html);
-        const estilo = traduzirCSS(css);
-        const programa = traduzirJS(js);
+        const html = traduzirHTML(arquivos["inicio.lhtml"] || "");
+        const css = traduzirCSS(arquivos["estilo.lcss"] || "");
+        const js = traduzirJS(arquivos["codigo.ljs"] || "");
 
         return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -140,19 +134,17 @@ window.LipiMotor = (() => {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-${estilo}
+${css}
 </style>
 </head>
 <body>
-${pagina}
+${html}
 <script>
 try {
-${programa}
+${js}
 } catch (erro) {
-    document.body.insertAdjacentHTML(
-        "beforeend",
-        "<pre style='color:red'>Erro: " + String(erro.message) + "</pre>"
-    );
+    document.body.innerHTML +=
+        '<pre style="color:red">Erro: ' + erro.message + '</pre>';
 }
 <\/script>
 </body>
@@ -161,10 +153,13 @@ ${programa}
 
     return {
         tags,
+        atributos,
         propriedades,
+        valores,
         traduzirHTML,
         traduzirCSS,
         traduzirJS,
         montarProjeto
     };
+
 })();
