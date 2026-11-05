@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LipiBR — Editor</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #111318;
+    color: #e5e7eb;
+    font-family: Consolas, monospace;
+}
+
+header {
+    height: 55px;
+    background: #191c23;
+    border-bottom: 1px solid #30343d;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+}
+
+.logo {
+    color: #55aaff;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+button {
+    background: #252a34;
+    color: white;
+    border: 1px solid #414957;
+    padding: 9px 14px;
+    cursor: pointer;
+    border-radius: 0;
+    font-family: inherit;
+}
+
+button:hover {
+    background: #343c49;
+}
+
+#executar {
+    background: #0877e8;
+    border-color: #0877e8;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: calc(100vh - 105px);
+}
+
+.painel {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.titulo {
+    background: #191c23;
+    padding: 12px;
+    border-bottom: 1px solid #30343d;
+    font-size: 13px;
+}
+
+textarea {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    background: #111318;
+    color: #d9e4f2;
+    border: 0;
+    outline: none;
+    padding: 20px;
+    font: 15px/1.7 Consolas, monospace;
+    tab-size: 4;
+}
+
+#terminal {
+    height: 42%;
+    background: #0b0d11;
+    border-top: 1px solid #30343d;
+    padding: 15px;
+    overflow: auto;
+    white-space: pre-wrap;
+    color: #a8e6a3;
+    font: 14px/1.6 Consolas, monospace;
+}
+
+.status {
+    height: 50px;
+    background: #0877e8;
+    padding: 15px;
+    font-size: 12px;
+}
+
+.acoes {
+    display: flex;
+    gap: 8px;
+}
+
+@media(max-width: 750px) {
+    main {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .painel {
+        height: 65vh;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">LipiBR</div>
+
+    <div class="acoes">
+        <button onclick="abrirArquivo()">Abrir .lp</button>
+        <button onclick="salvarArquivo()">Salvar .lp</button>
+        <button id="executar" onclick="executar()">Executar ▶</button>
+    </div>
+</header>
+
+<main>
+
+    <section class="painel">
+        <div class="titulo">EDITOR — programa.lp</div>
+
+        <textarea id="codigo" spellcheck="false"># Meu primeiro programa LipiBR
+
+nome = perguntar("Qual seu nome? ")
+
+mostrar("Olá,", nome)
+
+idade = 13
+
+se idade >= 13:
+    mostrar("Você pode continuar!")
+senao:
+    mostrar("Bem-vindo!")
+
+# Repetição
+para numero_atual em intervalo(1, 4):
+    mostrar("Número:", numero_atual)
+
+</textarea>
+    </section>
+
+    <section class="painel">
+        <div class="titulo">TERMINAL — SAÍDA</div>
+        <div id="terminal">LipiBR 1.0
+Inicializando editor...</div>
+    </section>
+
+</main>
+
+<div class="status" id="status">
+    LipiBR | Preparando ambiente...
+</div>
+
+<input type="file" id="arquivo" accept=".lp,text/plain" hidden>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+
+<script>
+
+let pyodide = null;
+let ocupado = false;
+
+const terminal = document.getElementById("terminal");
+const status = document.getElementById("status");
+const editor = document.getElementById("codigo");
+
+function escrever(texto) {
+    terminal.textContent += texto;
+    terminal.scrollTop = terminal.scrollHeight;
+}
+
+function limparTerminal() {
+    terminal.textContent = "";
+}
+
+const comandos = {
+
+    "Verdadeiro": "True",
+    "Falso": "False",
+    "Nulo": "None",
+
+    "verdadeiro": "True",
+    "falso": "False",
+    "nulo": "None",
+
+    "se": "if",
+    "senaose": "elif",
+    "senãose": "elif",
+    "senao": "else",
+    "senão": "else",
+
+    "enquanto": "while",
+    "para": "for",
+    "em": "in",
+    "e": "and",
+    "ou": "or",
+    "nao": "not",
+    "não": "not",
+
+    "definir": "def",
+    "retornar": "return",
+    "classe": "class",
+
+    "importar": "import",
+    "de": "from",
+    "como": "as",
+
+    "tentar": "try",
+    "exceto": "except",
+    "finalmente": "finally",
+    "levantar": "raise",
+
+    "passar": "pass",
+    "continuar": "continue",
+    "parar": "break",
+
+    "com": "with",
+    "global": "global",
+    "nao_local": "nonlocal",
+    "apagar": "del",
+    "afirmar": "assert",
+
+    "asincrono": "async",
+    "aguardar": "await",
+
+    "mostrar": "print",
+    "perguntar": "input",
+
+    "intervalo": "range",
+    "comprimento": "len",
+    "tipo": "type",
+
+    "texto": "str",
+    "numero": "int",
+    "decimal": "float",
+
+    "lista": "list",
+    "dicionario": "dict",
+    "conjunto": "set",
+    "tupla": "tuple",
+
+    "absoluto": "abs",
+    "soma": "sum",
+    "minimo": "min",
+    "maximo": "max",
+    "ordenar": "sorted",
+
+    "enumerar": "enumerate",
+    "zipar": "zip",
+    "mapear": "map",
+    "filtrar": "filter",
+
+    "qualquer": "any",
+    "todos": "all",
+    "reverter": "reversed",
+
+    "arredondar": "round",
+    "potencia": "pow",
+    "aberto": "open"
+};
+
+function traduzir(codigo) {
+
+    let resultado = "";
+    let i = 0;
+
+    while (i < codigo.length) {
+
+        let atual = codigo[i];
+
+        // Comentários
+        if (atual === "#") {
+
+            while (i < codigo.length && codigo[i] !== "\n") {
+                resultado += codigo[i];
+                i++;
+            }
+
+            continue;
+        }
+
+        // Textos entre aspas
+        if (atual === "'" || atual === '"') {
+
+            let aspas = atual;
+            let tripla =
+                codigo.slice(i, i + 3) === aspas.repeat(3);
+
+            let delimitador = tripla ? aspas.repeat(3) : aspas;
+
+            resultado += delimitador;
+            i += delimitador.length;
+
+            while (i < codigo.length) {
+
+                if (codigo[i] === "\\") {
+                    resultado += codigo.slice(i, i + 2);
+                    i += 2;
+                    continue;
+                }
+
+                if (codigo.slice(i, i + delimitador.length) === delimitador) {
+                    resultado += delimitador;
+                    i += delimitador.length;
+                    break;
+                }
+
+                resultado += codigo[i];
+                i++;
+            }
+
+            continue;
+        }
+
+        // Identificadores e comandos
+        if (/[\p{L}_]/u.test(atual)) {
+
+            let palavra = "";
+
+            while (
+                i < codigo.length &&
+                /[\p{L}\p{N}_]/u.test(codigo[i])
+            ) {
+                palavra += codigo[i];
+                i++;
+            }
+
+            resultado += comandos[palavra] || palavra;
+            continue;
+        }
+
+        resultado += atual;
+        i++;
+    }
+
+    return resultado;
+}
+
+async function iniciar() {
+
+    try {
+
+        status.textContent = "Carregando motor Python...";
+
+        pyodide = await loadPyodide();
+
+        pyodide.setStdout({
+            batched: texto => escrever(texto + "\n")
+        });
+
+        pyodide.setStderr({
+            batched: texto => escrever("ERRO: " + texto + "\n")
+        });
+
+        pyodide.globals.set(
+            "lipi_perguntar",
+            (mensagem) => window.prompt(String(mensagem ?? "")) ?? ""
+        );
+
+        await pyodide.runPythonAsync(`
+import builtins
+builtins.input = lipi_perguntar
+`);
+
+        status.textContent = "LipiBR | Motor pronto!";
+        escrever("\nMotor pronto! Pode executar seu código.\n");
+
+    } catch (erro) {
+
+        status.textContent = "Erro ao carregar o motor.";
+        escrever("\nNão foi possível carregar o Python: " + erro);
+    }
+}
+
+async function executar() {
+
+    if (!pyodide) {
+        escrever("\nAguarde o motor terminar de carregar.\n");
+        return;
+    }
+
+    if (ocupado) return;
+
+    ocupado = true;
+    limparTerminal();
+
+    status.textContent = "LipiBR | Executando...";
+
+    try {
+
+        let codigoOriginal = editor.value;
+        let codigoPython = traduzir(codigoOriginal);
+
+        await pyodide.runPythonAsync(codigoPython);
+
+        escrever("\nPrograma finalizado.\n");
+        status.textContent = "LipiBR | Execução concluída!";
+
+    } catch (erro) {
+
+        escrever("\nErro na LipiBR:\n" + erro + "\n");
+        status.textContent = "LipiBR | Erro na execução.";
+    }
+
+    ocupado = false;
+}
+
+function salvarArquivo() {
+
+    let arquivo = new Blob(
+        [editor.value],
+        {type: "text/plain;charset=utf-8"}
+    );
+
+    let link = document.createElement("a");
+
+    link.href = URL.createObjectURL(arquivo);
+    link.download = "programa.lp";
+    link.click();
+
+    URL.revokeObjectURL(link.href);
+}
+
+function abrirArquivo() {
+    document.getElementById("arquivo").click();
+}
+
+document.getElementById("arquivo").addEventListener("change", evento => {
+
+    let arquivo = evento.target.files[0];
+
+    if (!arquivo) return;
+
+    if (!arquivo.name.toLowerCase().endsWith(".lp")) {
+        alert("Escolha um arquivo .lp");
+        return;
+    }
+
+    let leitor = new FileReader();
+
+    leitor.onload = () => {
+        editor.value = leitor.result;
+        status.textContent = "Arquivo carregado: " + arquivo.name;
+    };
+
+    leitor.readAsText(arquivo);
+});
+
+iniciar();
+
+</script>
+
+</body>
+</html>
