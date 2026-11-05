@@ -1,556 +1,440 @@
 
-(() => {
-    const arquivosPadrao = {
-        "pagina.lhtml": `<pagina>
+const modelosIniciais = {
+    "index.html": `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu projeto</title>
+</head>
+<body>
+    <h1>Olá, mundo!</h1>
+    <p>Meu primeiro projeto no LipiBR Studio.</p>
+    <button id="botao">Clique aqui</button>
+</body>
+</html>`,
+
+    "style.css": `body {
+    background: #101827;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 30px;
+}
+
+button {
+    background: #087acc;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+}`,
+
+    "script.js": `const botao = document.getElementById("botao");
+
+botao.addEventListener("click", function() {
+    alert("LipiBR está funcionando!");
+});`,
+
+    "pagina.lhtml": `<pagina>
     <cabecalho>
         <titulo>Meu primeiro site</titulo>
     </cabecalho>
-
     <conteudo>
-        <texto>Bem-vindo ao LipiBR!</texto>
-        <botao id="meuBotao">Clique aqui</botao>
+        <texto>Feito com LipiBR!</texto>
+        <botao id="botao">Clique aqui</botao>
     </conteudo>
 </pagina>`,
-        "estilo.lcss": `pagina {
+
+    "estilo.lcss": `pagina {
     fundo: #101827;
     cor: branco;
-    fonte: Arial;
-    espacamento: 25px;
-}
-
-titulo {
-    cor: azul;
+    fonte: Arial, sans-serif;
     alinhamento: centralizado;
+    espacamento: 30px;
 }
 
 botao {
     fundo: azul;
     cor: branco;
-    espacamento: 12px;
     borda: none;
+    espacamento: 12px;
     cursor: pointer;
 }`,
-        "codigo.ljs": `let mensagem = "LipiBR funcionando!"
 
-show(mensagem)
+    "codigo.ljs": `let nome = "LipiBR";
 
-document.getElementById("meuBotao").onclick = function() {
-    alert("Você executou seu primeiro programa!")
-}`
+mostrar("Olá, " + nome);
+
+const botao = document.getElementById("botao");
+
+botao.addEventListener("click", function() {
+    alert("Você executou LipiJS!");
+});`
+};
+
+let arquivos = {};
+let arquivoAtual = "index.html";
+let editor = null;
+let modelos = {};
+let arquivosAbertos = ["index.html"];
+
+const lista = document.getElementById("fileList");
+const abas = document.getElementById("tabs");
+const saida = document.getElementById("output");
+const preview = document.getElementById("preview");
+const statusTexto = document.getElementById("statusText");
+
+function carregarDados() {
+    try {
+        const dados = JSON.parse(localStorage.getItem("lipibr_projeto") || "{}");
+        arquivos = { ...modelosIniciais, ...dados };
+    } catch {
+        arquivos = { ...modelosIniciais };
+    }
+}
+
+function salvarDados() {
+    if (editor && arquivoAtual) {
+        arquivos[arquivoAtual] = editor.getValue();
+    }
+
+    localStorage.setItem("lipibr_projeto", JSON.stringify(arquivos));
+    saida.textContent = "Projeto salvo neste navegador.";
+    statusTexto.textContent = "Salvo | UTF-8 | Espaços: 4";
+}
+
+function linguagemDoArquivo(nome) {
+    const extensao = nome.split(".").pop().toLowerCase();
+
+    const linguagens = {
+        html: "html",
+        css: "css",
+        js: "javascript",
+        lhtml: "lipihtml",
+        lcss: "lipicss",
+        ljs: "lipijs"
     };
 
-    let arquivos = {};
-    let pastas = [];
-    let arquivoAtual = "pagina.lhtml";
-    let editor = null;
-    let modelos = {};
-    let modoModal = "arquivo";
+    return linguagens[extensao] || "plaintext";
+}
 
-    const $ = id => document.getElementById(id);
-    const output = $("output");
-
-    function informar(mensagem) {
-        output.textContent += "\n" + mensagem;
-        output.scrollTop = output.scrollHeight;
-    }
-
-    function salvar() {
-        if (editor && modelos[arquivoAtual]) {
-            arquivos[arquivoAtual] = editor.getValue();
+function configurarLinguagens() {
+    const linguagens = [
+        {
+            id: "lipihtml",
+            extensao: "lhtml",
+            inicio: /<\/?[a-zA-ZÀ-ÿ]*/,
+            palavras: ["pagina","cabecalho","rodape","conteudo","secao","titulo","subtitulo","texto","botao","caixa","imagem","link","entrada","lista","item"]
+        },
+        {
+            id: "lipicss",
+            extensao: "lcss",
+            inicio: /[a-zA-ZÀ-ÿ-]+/,
+            palavras: ["fundo","cor","largura","altura","espacamento","margem","alinhamento","borda","raio","sombra","tamanho","fonte","exibicao","direcao","justificacao","itens"]
+        },
+        {
+            id: "lipijs",
+            extensao: "ljs",
+            inicio: /[a-zA-Z_$][\w$]*/,
+            palavras: ["mostrar","show","let","const","var","if","else","for","while","function","return","true","false","null"]
         }
+    ];
 
-        localStorage.setItem("lipibr_arquivos", JSON.stringify(arquivos));
-        localStorage.setItem("lipibr_pastas", JSON.stringify(pastas));
+    linguagens.forEach(item => {
+        monaco.languages.register({ id: item.id });
 
-        $("statusMessage").textContent = "Salvo";
-        informar("Projeto salvo neste navegador.");
-    }
-
-    function carregar() {
-        try {
-            const salvos = JSON.parse(
-                localStorage.getItem("lipibr_arquivos") || "null"
-            );
-
-            arquivos = salvos && typeof salvos === "object"
-                ? salvos
-                : { ...arquivosPadrao };
-
-            pastas = JSON.parse(
-                localStorage.getItem("lipibr_pastas") || "[]"
-            );
-        } catch {
-            arquivos = { ...arquivosPadrao };
-            pastas = [];
-        }
-
-        if (!Object.keys(arquivos).length) {
-            arquivos = { ...arquivosPadrao };
-        }
-    }
-
-    function linguagem(nome) {
-        const extensao = nome.split(".").pop().toLowerCase();
-
-        if (extensao === "lhtml") return "html";
-        if (extensao === "lcss") return "css";
-        if (extensao === "ljs") return "javascript";
-        if (extensao === "html") return "html";
-        if (extensao === "css") return "css";
-        if (extensao === "js") return "javascript";
-
-        return "plaintext";
-    }
-
-    function icone(nome) {
-        const extensao = nome.split(".").pop().toLowerCase();
-
-        if (extensao === "lhtml" || extensao === "html") {
-            return ["◇", "html-icon"];
-        }
-
-        if (extensao === "lcss" || extensao === "css") {
-            return ["◇", "css-icon"];
-        }
-
-        if (extensao === "ljs" || extensao === "js") {
-            return ["◇", "js-icon"];
-        }
-
-        return ["◇", "lp-icon"];
-    }
-
-    function renderizarArquivos() {
-        const lista = $("fileList");
-        lista.innerHTML = "";
-
-        Object.keys(arquivos).sort().forEach(nome => {
-            const botao = document.createElement("button");
-            const [simbolo, classe] = icone(nome);
-
-            botao.className = "file" +
-                (nome === arquivoAtual ? " active" : "");
-
-            const iconeElemento = document.createElement("span");
-            iconeElemento.className = "file-icon " + classe;
-            iconeElemento.textContent = simbolo;
-
-            const texto = document.createElement("span");
-            texto.textContent = nome;
-
-            botao.append(iconeElemento, texto);
-
-            botao.addEventListener("click", () => abrirArquivo(nome));
-
-            lista.appendChild(botao);
+        monaco.languages.setMonarchTokensProvider(item.id, {
+            tokenizer: {
+                root: [
+                    [/"([^"\\]|\\.)*"/, "string"],
+                    [/'([^'\\]|\\.)*'/, "string"],
+                    [/\/\/.*$/, "comment"],
+                    [/\b(let|const|var|if|else|for|while|function|return|true|false|null)\b/, "keyword"],
+                    [/\b(mostrar|show)\b/, "function"],
+                    [/\b[0-9]+\b/, "number"],
+                    [/[{}()\[\]]/, "@brackets"],
+                    [/[a-zA-ZÀ-ÿ_$][\wÀ-ÿ$]*/, "identifier"]
+                ]
+            }
         });
 
-        pastas.forEach(nome => {
-            const pasta = document.createElement("div");
-            pasta.className = "file";
-            pasta.textContent = "▸ " + nome;
-            lista.appendChild(pasta);
-        });
-    }
+        monaco.languages.registerCompletionItemProvider(item.id, {
+            provideCompletionItems(model, position) {
+                const sugestoes = item.palavras.map((palavra, indice) => ({
+                    label: palavra,
+                    kind: monaco.languages.CompletionItemKind.Keyword,
+                    insertText: palavra,
+                    sortText: String(indice).padStart(3, "0")
+                }));
 
-    function renderizarAbas() {
-        const abas = $("tabs");
-        abas.innerHTML = "";
-
-        const aba = document.createElement("button");
-        aba.className = "tab active";
-        aba.textContent = arquivoAtual;
-
-        abas.appendChild(aba);
-    }
-
-    function abrirArquivo(nome) {
-        if (!(nome in arquivos)) return;
-
-        if (editor && modelos[arquivoAtual]) {
-            arquivos[arquivoAtual] = editor.getValue();
-        }
-
-        arquivoAtual = nome;
-
-        const modelo = modelos[nome];
-
-        if (modelo) {
-            editor.setModel(modelo);
-        } else {
-            const uri = monaco.Uri.parse("file:///" + nome);
-            modelos[nome] = monaco.editor.createModel(
-                arquivos[nome],
-                linguagem(nome),
-                uri
-            );
-            editor.setModel(modelos[nome]);
-        }
-
-        $("statusFile").textContent = nome;
-        renderizarArquivos();
-        renderizarAbas();
-    }
-
-    function configurarSugestoes() {
-        const snippetsHTML = [
-            {
-                label: "pagina",
-                insertText: "<pagina>\n\t$0\n</pagina>",
-                detail: "Estrutura de página LipiHTML"
-            },
-            {
-                label: "cabecalho",
-                insertText: "<cabecalho>\n\t$0\n</cabecalho>",
-                detail: "Cabeçalho"
-            },
-            {
-                label: "conteudo",
-                insertText: "<conteudo>\n\t$0\n</conteudo>",
-                detail: "Conteúdo principal"
-            },
-            {
-                label: "titulo",
-                insertText: "<titulo>$1</titulo>",
-                detail: "Título"
-            },
-            {
-                label: "texto",
-                insertText: "<texto>$1</texto>",
-                detail: "Texto"
-            },
-            {
-                label: "botao",
-                insertText: '<botao id="$1">$2</botao>',
-                detail: "Botão"
-            },
-            {
-                label: "entrada",
-                insertText: '<entrada id="$1" tipo="texto">',
-                detail: "Campo de entrada"
-            }
-        ];
-
-        const snippetsCSS = [
-            ["fundo", "fundo: ${1:#101010};"],
-            ["cor", "cor: ${1:branco};"],
-            ["largura", "largura: ${1:100%};"],
-            ["altura", "altura: ${1:100px};"],
-            ["espacamento", "espacamento: ${1:20px};"],
-            ["margem", "margem: ${1:10px};"],
-            ["alinhamento", "alinhamento: ${1:centralizado};"],
-            ["raio", "raio: ${1:8px};"],
-            ["sombra", "sombra: ${1:0 0 10px #000};"],
-            ["exibicao", "exibicao: ${1:flex};"],
-            ["justificacao", "justificacao: ${1:centralizado};"],
-            ["itens", "itens: ${1:centralizado};"]
-        ];
-
-        const snippetsJS = [
-            {
-                label: "show",
-                insertText: "show(${1:mensagem})",
-                detail: "Exibe uma mensagem no terminal"
-            },
-            {
-                label: "funcao",
-                insertText: "function ${1:nome}(${2}) {\n\t$0\n}",
-                detail: "Cria uma função"
-            },
-            {
-                label: "if",
-                insertText: "if (${1:condicao}) {\n\t$0\n}",
-                detail: "Condição"
-            },
-            {
-                label: "for",
-                insertText: "for (let i = 0; i < ${1:10}; i++) {\n\t$0\n}",
-                detail: "Laço de repetição"
-            },
-            {
-                label: "while",
-                insertText: "while (${1:condicao}) {\n\t$0\n}",
-                detail: "Repetição while"
-            },
-            {
-                label: "array",
-                insertText: "let ${1:itens} = [${2}];",
-                detail: "Cria uma lista"
-            },
-            {
-                label: "evento",
-                insertText: 'document.getElementById("${1:id}").onclick = function() {\n\t$0\n}',
-                detail: "Evento de clique"
-            },
-            {
-                label: "console",
-                insertText: "console.log(${1:valor});",
-                detail: "Exibe valor no console"
-            }
-        ];
-
-        monaco.languages.registerCompletionItemProvider("html", {
-            provideCompletionItems() {
-                return {
-                    suggestions: snippetsHTML.map(item => ({
-                        label: item.label,
+                if (item.id === "lipihtml") {
+                    sugestoes.push({
+                        label: "estrutura de página",
                         kind: monaco.languages.CompletionItemKind.Snippet,
-                        insertText: item.insertText,
-                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: item.detail
-                    }))
-                };
-            }
-        });
-
-        monaco.languages.registerCompletionItemProvider("css", {
-            provideCompletionItems() {
-                return {
-                    suggestions: snippetsCSS.map(([label, insertText]) => ({
-                        label,
-                        kind: monaco.languages.CompletionItemKind.Property,
-                        insertText,
+                        insertText: [
+                            "<pagina>",
+                            "    <cabecalho>",
+                            "        <titulo>${1:Meu site}</titulo>",
+                            "    </cabecalho>",
+                            "    <conteudo>",
+                            "        <texto>${2:Olá, mundo!}</texto>",
+                            "    </conteudo>",
+                            "</pagina>"
+                        ].join("\n"),
                         insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-                    }))
-                };
-            }
-        });
+                    });
+                }
 
-        monaco.languages.registerCompletionItemProvider("javascript", {
-            provideCompletionItems() {
-                return {
-                    suggestions: snippetsJS.map(item => ({
-                        label: item.label,
+                if (item.id === "lipicss") {
+                    sugestoes.push({
+                        label: "regra CSS",
                         kind: monaco.languages.CompletionItemKind.Snippet,
-                        insertText: item.insertText,
-                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: item.detail
-                    }))
-                };
+                        insertText: [
+                            "${1:seletor} {",
+                            "    fundo: ${2:#ffffff};",
+                            "    cor: ${3:#000000};",
+                            "    espacamento: ${4:10px};",
+                            "}"
+                        ].join("\n"),
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                    });
+                }
+
+                if (item.id === "lipijs") {
+                    sugestoes.push({
+                        label: "mostrar",
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText: "mostrar(${1:mensagem});",
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                    });
+                }
+
+                return { suggestions: sugestoes };
             }
         });
+    });
+}
+
+function criarEditor() {
+    if (typeof require === "undefined") {
+        saida.textContent = "Não foi possível carregar o editor Monaco. Verifique sua conexão e recarregue a página.";
+        return;
     }
 
-    function configurarEditor() {
+    window.MonacoEnvironment = {
+        getWorkerUrl: function() {
+            const codigo = `
+                self.MonacoEnvironment = { baseUrl: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/" };
+                importScripts("https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/base/worker/workerMain.js");
+            `;
+            return "data:text/javascript;charset=utf-8," + encodeURIComponent(codigo);
+        }
+    };
+
+    require.config({
+        paths: {
+            vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
+        }
+    });
+
+    require(["vs/editor/editor.main"], function() {
+        configurarLinguagens();
+
         monaco.editor.defineTheme("lipibr-dark", {
             base: "vs-dark",
             inherit: true,
             rules: [],
             colors: {
                 "editor.background": "#1e1e1e",
-                "editor.foreground": "#d4d4d4",
                 "editorLineNumber.foreground": "#858585",
                 "editorLineNumber.activeForeground": "#c6c6c6",
-                "editorCursor.foreground": "#aeafad",
+                "editorCursor.foreground": "#ffffff",
                 "editor.selectionBackground": "#264f78",
-                "editor.lineHighlightBackground": "#252526",
-                "editorWidget.background": "#252526",
-                "editorSuggestWidget.background": "#252526",
-                "editorSuggestWidget.border": "#454545"
+                "editor.lineHighlightBackground": "#252526"
             }
         });
 
-        editor = monaco.editor.create($("editor"), {
-            value: "",
-            language: "html",
+        editor = monaco.editor.create(document.getElementById("editor"), {
+            value: arquivos[arquivoAtual],
+            language: linguagemDoArquivo(arquivoAtual),
             theme: "lipibr-dark",
             automaticLayout: true,
+            fontSize: 14,
             fontFamily: "Consolas, 'Courier New', monospace",
-            fontSize: 13,
-            lineHeight: 22,
             minimap: { enabled: true },
+            lineNumbers: "on",
+            roundedSelection: false,
             scrollBeyondLastLine: false,
             tabSize: 4,
             insertSpaces: true,
+            wordWrap: "off",
             autoClosingBrackets: "always",
             autoClosingQuotes: "always",
-            autoClosingOvertype: "always",
             autoIndent: "full",
-            formatOnPaste: true,
-            formatOnType: true,
             suggestOnTriggerCharacters: true,
             quickSuggestions: true,
-            wordWrap: "off",
-            padding: { top: 10 }
+            parameterHints: { enabled: true }
         });
-
-        configurarSugestoes();
 
         editor.onDidChangeModelContent(() => {
-            $("statusMessage").textContent = "Modificado";
             arquivos[arquivoAtual] = editor.getValue();
+            localStorage.setItem("lipibr_projeto", JSON.stringify(arquivos));
+            statusTexto.textContent = "Alterações não salvas | UTF-8";
         });
 
-        editor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-            salvar
-        );
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, salvarDados);
 
-        editor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS |
-            monaco.KeyMod.Shift,
-            executar
-        );
-    }
-
-    function executar() {
-        if (!editor) return;
-
-        arquivos[arquivoAtual] = editor.getValue();
-
-        salvarSemMensagem();
-        output.textContent = "Executando projeto...";
-
-        try {
-            const documento = LipiMotor.montarProjeto(arquivos);
-            $("preview").srcdoc = documento;
-            informar("Pré-visualização atualizada.");
-            $("statusMessage").textContent = "Executado";
-        } catch (erro) {
-            informar("Erro: " + erro.message);
-            $("statusMessage").textContent = "Erro";
-        }
-    }
-
-    function salvarSemMensagem() {
-        if (editor) arquivos[arquivoAtual] = editor.getValue();
-
-        localStorage.setItem("lipibr_arquivos", JSON.stringify(arquivos));
-        localStorage.setItem("lipibr_pastas", JSON.stringify(pastas));
-    }
-
-    function abrirModal(tipo) {
-        modoModal = tipo;
-        $("modalTitle").textContent =
-            tipo === "arquivo" ? "Novo arquivo" : "Nova pasta";
-
-        $("newName").value = "";
-        $("newName").placeholder =
-            tipo === "arquivo"
-                ? "exemplo.ljs, pagina.lhtml ou estilo.lcss"
-                : "Nome da pasta";
-
-        $("fileModal").classList.add("open");
-        $("newName").focus();
-    }
-
-    function criarItem() {
-        const nome = $("newName").value.trim();
-
-        if (!nome) return;
-
-        if (modoModal === "pasta") {
-            if (pastas.includes(nome)) {
-                alert("Essa pasta já existe.");
-                return;
-            }
-
-            pastas.push(nome);
-        } else {
-            if (!/\.(ljs|lhtml|lcss|js|html|css)$/i.test(nome)) {
-                alert("Use uma extensão .ljs, .lhtml ou .lcss.");
-                return;
-            }
-
-            if (Object.hasOwn(arquivos, nome)) {
-                alert("Esse arquivo já existe.");
-                return;
-            }
-
-            arquivos[nome] = "";
-        }
-
-        salvarSemMensagem();
-        $("fileModal").classList.remove("open");
-        renderizarArquivos();
-
-        if (modoModal === "arquivo") {
-            abrirArquivo(nome);
-        }
-
-        informar(
-            (modoModal === "arquivo" ? "Arquivo criado: " : "Pasta criada: ") + nome
-        );
-    }
-
-    window.addEventListener("message", evento => {
-        if (evento.data?.type === "lipibr-console") {
-            informar("> " + evento.data.values.join(" "));
-        }
-
-        if (evento.data?.type === "lipibr-error") {
-            informar("Erro no programa: " + evento.data.message);
-        }
+        abrirArquivo("index.html");
+        saida.textContent = "Monaco Editor carregado.\nLipiBR Studio pronto.";
     });
+}
 
-    $("save").addEventListener("click", salvar);
-    $("run").addEventListener("click", executar);
-    $("refresh").addEventListener("click", executar);
+function iconeArquivo(nome) {
+    if (nome.endsWith(".html") || nome.endsWith(".lhtml")) return ["H", "html-icon"];
+    if (nome.endsWith(".css") || nome.endsWith(".lcss")) return ["C", "css-icon"];
+    if (nome.endsWith(".js") || nome.endsWith(".ljs")) return ["J", "js-icon"];
+    return ["F", "lipi-icon"];
+}
 
-    $("newFile").addEventListener("click", () => abrirModal("arquivo"));
-    $("newFolder").addEventListener("click", () => abrirModal("pasta"));
+function desenharArquivos() {
+    lista.innerHTML = "";
 
-    $("cancelModal").addEventListener("click", () => {
-        $("fileModal").classList.remove("open");
+    Object.keys(arquivos).sort().forEach(nome => {
+        const botao = document.createElement("button");
+        const [letra, classe] = iconeArquivo(nome);
+
+        botao.className = "file" + (nome === arquivoAtual ? " active" : "");
+        botao.innerHTML = `<span class="file-icon ${classe}">${letra}</span>`;
+        botao.appendChild(document.createTextNode(nome));
+
+        botao.addEventListener("click", () => abrirArquivo(nome));
+        lista.appendChild(botao);
     });
+}
 
-    $("confirmModal").addEventListener("click", criarItem);
+function desenharAbas() {
+    abas.innerHTML = "";
 
-    $("newName").addEventListener("keydown", evento => {
-        if (evento.key === "Enter") criarItem();
-        if (evento.key === "Escape") {
-            $("fileModal").classList.remove("open");
-        }
+    arquivosAbertos.forEach(nome => {
+        const botao = document.createElement("button");
+        botao.className = "tab" + (nome === arquivoAtual ? " active" : "");
+        botao.textContent = nome;
+        botao.addEventListener("click", () => abrirArquivo(nome));
+        abas.appendChild(botao);
     });
+}
 
-    $("menuArquivo").addEventListener("click", () => abrirModal("arquivo"));
-    $("menuEditar").addEventListener("click", () => {
-        editor.focus();
-        informar("Use Ctrl+Z para desfazer e Ctrl+Shift+Z para refazer.");
-    });
-    $("menuExibir").addEventListener("click", () => {
-        editor.focus();
-        informar("Editor focado.");
-    });
-    $("menuAjuda").addEventListener("click", () => {
-        informar("LipiBR Studio: Ctrl+Espaço abre sugestões de código.");
-    });
+function abrirArquivo(nome) {
+    if (!(nome in arquivos) || !editor) return;
 
-    carregar();
+    if (!arquivosAbertos.includes(nome)) arquivosAbertos.push(nome);
 
-    if (!window.require) {
-        output.textContent =
-            "Não foi possível carregar o Monaco Editor. Verifique sua conexão e recarregue a página.";
+    arquivoAtual = nome;
+    editor.setValue(arquivos[nome]);
+
+    const model = editor.getModel();
+    monaco.editor.setModelLanguage(model, linguagemDoArquivo(nome));
+
+    desenharArquivos();
+    desenharAbas();
+    statusTexto.textContent = nome + " | UTF-8 | Espaços: 4";
+}
+
+function novoArquivo() {
+    const nome = prompt("Nome do arquivo. Exemplos: teste.html, estilo.css, app.ljs");
+
+    if (!nome) return;
+
+    if (!/^[\wÀ-ÿ.-]+\.(html|css|js|lhtml|lcss|ljs)$/.test(nome)) {
+        alert("Extensão não aceita. Use HTML, CSS, JS, LHTML, LCSS ou LJS.");
         return;
     }
 
-    window.require.config({
-        paths: {
-            vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
-        }
-    });
+    if (arquivos[nome]) {
+        alert("Já existe um arquivo com esse nome.");
+        return;
+    }
 
-    window.require(["vs/editor/editor.main"], () => {
-        configurarEditor();
+    arquivos[nome] = "";
+    salvarSilencioso();
+    abrirArquivo(nome);
+    saida.textContent = "Arquivo criado: " + nome;
+}
 
-        Object.keys(arquivos).forEach(nome => {
-            modelos[nome] = monaco.editor.createModel(
-                arquivos[nome],
-                linguagem(nome),
-                monaco.Uri.parse("file:///" + nome)
-            );
-        });
+function salvarSilencioso() {
+    if (editor && arquivoAtual) arquivos[arquivoAtual] = editor.getValue();
+    localStorage.setItem("lipibr_projeto", JSON.stringify(arquivos));
+}
 
-        abrirArquivo(
-            arquivos["pagina.lhtml"] !== undefined
-                ? "pagina.lhtml"
-                : Object.keys(arquivos)[0]
-        );
+function renomearArquivo() {
+    const novoNome = prompt("Novo nome do arquivo:", arquivoAtual);
 
-        informar("Monaco Editor carregado.");
-        informar("Autocomplete e fechamento automático ativados.");
-        informar("Use Ctrl+Espaço para ver sugestões.");
+    if (!novoNome || novoNome === arquivoAtual) return;
 
-        executar();
-    });
-})();
+    if (arquivos[novoNome] !== undefined) {
+        alert("Já existe um arquivo com esse nome.");
+        return;
+    }
+
+    arquivos[novoNome] = arquivos[arquivoAtual];
+    delete arquivos[arquivoAtual];
+
+    arquivosAbertos = arquivosAbertos.map(nome =>
+        nome === arquivoAtual ? novoNome : nome
+    );
+
+    arquivoAtual = novoNome;
+    salvarSilencioso();
+    abrirArquivo(novoNome);
+}
+
+function excluirArquivo() {
+    if (!confirm("Excluir " + arquivoAtual + "?")) return;
+
+    delete arquivos[arquivoAtual];
+    arquivosAbertos = arquivosAbertos.filter(nome => nome !== arquivoAtual);
+
+    const proximo = Object.keys(arquivos)[0];
+
+    salvarSilencioso();
+
+    if (proximo) {
+        abrirArquivo(proximo);
+    } else {
+        arquivoAtual = "";
+        editor.setValue("");
+        abas.innerHTML = "";
+        desenharArquivos();
+    }
+}
+
+function criarPasta() {
+    alert("Nesta versão, os arquivos ficam na raiz do projeto. Pastas reais serão adicionadas em uma atualização própria.");
+}
+
+function executarProjeto() {
+    salvarSilencioso();
+
+    try {
+        const resultado = LipiMotor.montarProjeto(arquivos);
+        preview.srcdoc = resultado;
+        saida.textContent = "Projeto executado na pré-visualização.";
+        statusTexto.textContent = "Execução concluída";
+    } catch (erro) {
+        saida.textContent = "Erro ao executar: " + erro.message;
+        statusTexto.textContent = "Erro";
+    }
+}
+
+document.getElementById("newFile").addEventListener("click", novoArquivo);
+document.getElementById("saveFiles").addEventListener("click", salvarDados);
+document.getElementById("runProject").addEventListener("click", executarProjeto);
+document.getElementById("refreshPreview").addEventListener("click", executarProjeto);
+document.getElementById("renameFile").addEventListener("click", renomearArquivo);
+document.getElementById("deleteFile").addEventListener("click", excluirArquivo);
+document.getElementById("newFolder").addEventListener("click", criarPasta);
+
+carregarDados();
+desenharArquivos();
+criarEditor();
