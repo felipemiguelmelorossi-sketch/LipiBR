@@ -4,469 +4,593 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LipiBR — Editor</title>
-
+<meta name="theme-color" content="#10131a">
+<title>LipiBR — Editor de programação</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
 <style>
+:root {
+    --fundo: #10131a;
+    --painel: #181d27;
+    --painel2: #202735;
+    --borda: #303949;
+    --azul: #3987ff;
+    --texto: #edf2fa;
+    --secundario: #929daf;
+    --verde: #4bd69a;
+    --vermelho: #ff6875;
+}
+
 * {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    background: #111318;
-    color: #e5e7eb;
-    font-family: Consolas, monospace;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
 }
 
-header {
-    height: 55px;
-    background: #191c23;
-    border-bottom: 1px solid #30343d;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 18px;
-}
-
-.logo {
-    color: #55aaff;
-    font-size: 20px;
-    font-weight: bold;
+button, input {
+    font: inherit;
 }
 
 button {
-    background: #252a34;
-    color: white;
-    border: 1px solid #414957;
-    padding: 9px 14px;
     cursor: pointer;
-    border-radius: 0;
-    font-family: inherit;
 }
 
-button:hover {
-    background: #343c49;
-}
-
-#executar {
-    background: #0877e8;
-    border-color: #0877e8;
-}
-
-main {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    height: calc(100vh - 105px);
-}
-
-.painel {
-    min-width: 0;
+.topo {
+    height: 64px;
+    padding: 0 24px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--borda);
+    background: var(--painel);
 }
 
-.titulo {
-    background: #191c23;
-    padding: 12px;
-    border-bottom: 1px solid #30343d;
-    font-size: 13px;
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-size: 20px;
+    font-weight: 750;
+    letter-spacing: -.5px;
 }
 
-textarea {
-    flex: 1;
-    width: 100%;
-    resize: none;
-    background: #111318;
-    color: #d9e4f2;
-    border: 0;
-    outline: none;
-    padding: 20px;
-    font: 15px/1.7 Consolas, monospace;
-    tab-size: 4;
+.logo {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: var(--azul);
+    color: white;
+    font-size: 22px;
+    font-weight: 800;
 }
 
-#terminal {
-    height: 42%;
-    background: #0b0d11;
-    border-top: 1px solid #30343d;
-    padding: 15px;
-    overflow: auto;
-    white-space: pre-wrap;
-    color: #a8e6a3;
-    font: 14px/1.6 Consolas, monospace;
-}
-
-.status {
-    height: 50px;
-    background: #0877e8;
-    padding: 15px;
-    font-size: 12px;
+.marca small {
+    color: var(--secundario);
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 5px;
 }
 
 .acoes {
     display: flex;
-    gap: 8px;
+    gap: 9px;
 }
 
-@media(max-width: 750px) {
-    main {
-        grid-template-columns: 1fr;
-        height: auto;
+.botao {
+    border: 1px solid var(--borda);
+    background: var(--painel2);
+    color: var(--texto);
+    padding: 9px 14px;
+    border-radius: 7px;
+    font-size: 13px;
+    transition: .15s;
+}
+
+.botao:hover {
+    border-color: var(--azul);
+    background: #273449;
+}
+
+.executar {
+    background: var(--azul);
+    border-color: var(--azul);
+    color: white;
+    font-weight: 700;
+}
+
+.executar:hover {
+    background: #246bd5;
+}
+
+.principal {
+    max-width: 1500px;
+    margin: auto;
+    padding: 25px;
+}
+
+.cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 19px;
+    gap: 15px;
+}
+
+.cabecalho h1 {
+    margin: 0 0 5px;
+    font-size: 23px;
+}
+
+.cabecalho p {
+    margin: 0;
+    color: var(--secundario);
+    font-size: 13px;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--secundario);
+    font-size: 12px;
+}
+
+.ponto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5a63c;
+}
+
+.ponto.pronto {
+    background: var(--verde);
+}
+
+.ponto.erro {
+    background: var(--vermelho);
+}
+
+.editor {
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--painel);
+}
+
+.editor-topo {
+    min-height: 47px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--borda);
+    gap: 10px;
+}
+
+.arquivo {
+    font-size: 13px;
+    color: var(--texto);
+}
+
+.arquivo span {
+    color: var(--azul);
+    margin-right: 8px;
+}
+
+.linguagem {
+    font-size: 11px;
+    color: var(--secundario);
+}
+
+.area-codigo {
+    display: flex;
+    min-height: 440px;
+    background: #121720;
+}
+
+.linhas {
+    width: 48px;
+    padding: 17px 12px;
+    text-align: right;
+    color: #657187;
+    background: #151b25;
+    border-right: 1px solid var(--borda);
+    font: 14px/24px Consolas, monospace;
+    user-select: none;
+    white-space: pre;
+    overflow: hidden;
+}
+
+#codigo {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 440px;
+    resize: vertical;
+    border: 0;
+    outline: 0;
+    padding: 17px;
+    color: #dce8fa;
+    background: transparent;
+    font: 14px/24px Consolas, "Courier New", monospace;
+    tab-size: 4;
+    white-space: pre;
+    overflow: auto;
+}
+
+#codigo::selection {
+    background: #315d91;
+}
+
+.rodape-editor {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    color: var(--secundario);
+    font-size: 11px;
+    border-top: 1px solid var(--borda);
+}
+
+.terminal {
+    margin-top: 18px;
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--painel);
+}
+
+.terminal-topo {
+    height: 44px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--borda);
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.limpar {
+    border: 0;
+    background: transparent;
+    color: var(--secundario);
+    font-size: 12px;
+}
+
+#saida {
+    min-height: 135px;
+    max-height: 300px;
+    overflow: auto;
+    padding: 16px;
+    color: #c6d3e5;
+    font: 13px/22px Consolas, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.saida-erro {
+    color: var(--vermelho);
+}
+
+.saida-sistema {
+    color: var(--verde);
+}
+
+.rodape {
+    text-align: center;
+    padding: 25px;
+    color: var(--secundario);
+    font-size: 11px;
+}
+
+@media(max-width:650px) {
+    .topo {
+        padding: 0 12px;
     }
 
-    .painel {
-        height: 65vh;
+    .marca {
+        font-size: 17px;
+    }
+
+    .marca small {
+        display: none;
+    }
+
+    .acoes {
+        gap: 5px;
+    }
+
+    .botao {
+        padding: 8px;
+        font-size: 11px;
+    }
+
+    .principal {
+        padding: 15px 10px;
+    }
+
+    .cabecalho {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .area-codigo, #codigo {
+        min-height: 370px;
     }
 }
 </style>
 </head>
-
 <body>
 
-<header>
-    <div class="logo">LipiBR</div>
+<header class="topo">
+    <div class="marca">
+        <div class="logo">L</div>
+        LipiBR <small>EDITOR DE CÓDIGO</small>
+    </div>
 
     <div class="acoes">
-        <button onclick="abrirArquivo()">Abrir .lp</button>
-        <button onclick="salvarArquivo()">Salvar .lp</button>
-        <button id="executar" onclick="executar()">Executar ▶</button>
+        <button class="botao" id="abrir">Abrir</button>
+        <button class="botao" id="salvar">Salvar</button>
+        <button class="botao executar" id="executar">▶ Executar</button>
     </div>
 </header>
 
-<main>
+<main class="principal">
 
-    <section class="painel">
-        <div class="titulo">EDITOR — programa.lp</div>
+    <section class="cabecalho">
+        <div>
+            <h1>Editor LipiBR</h1>
+            <p>Escreva seu código, execute e veja o resultado.</p>
+        </div>
 
-        <textarea id="codigo" spellcheck="false"># Meu primeiro programa LipiBR
-
-nome = perguntar("Qual seu nome? ")
-
-mostrar("Olá,", nome)
-
-idade = 13
-
-se idade >= 13:
-    mostrar("Você pode continuar!")
-senao:
-    mostrar("Bem-vindo!")
-
-# Repetição
-para numero_atual em intervalo(1, 4):
-    mostrar("Número:", numero_atual)
-
-</textarea>
+        <div class="status">
+            <span class="ponto" id="ponto"></span>
+            <span id="estado">Carregando Python...</span>
+        </div>
     </section>
 
-    <section class="painel">
-        <div class="titulo">TERMINAL — SAÍDA</div>
-        <div id="terminal">LipiBR 1.0
-Inicializando editor...</div>
+    <section class="editor">
+        <div class="editor-topo">
+            <div class="arquivo"><span>●</span> programa.lp</div>
+            <div class="linguagem">LIPIBR</div>
+        </div>
+
+        <div class="area-codigo">
+            <div class="linhas" id="linhas">1</div>
+            <textarea id="codigo" spellcheck="false" autocapitalize="off" autocomplete="off">nome = perguntar("Qual é seu nome?")
+
+se nome:
+    mostrar("Olá,", nome)
+senao:
+    mostrar("Você não digitou seu nome.")</textarea>
+        </div>
+
+        <div class="rodape-editor">
+            <span>Arquivo .lp</span>
+            <span id="posicao">Linha 1</span>
+        </div>
+    </section>
+
+    <section class="terminal">
+        <div class="terminal-topo">
+            <span>Terminal de saída</span>
+            <button class="limpar" id="limpar">Limpar terminal</button>
+        </div>
+        <div id="saida">Aguardando inicialização...</div>
     </section>
 
 </main>
 
-<div class="status" id="status">
-    LipiBR | Preparando ambiente...
-</div>
+<footer class="rodape">
+    LipiBR — Uma linguagem de programação em português.
+</footer>
 
-<input type="file" id="arquivo" accept=".lp,text/plain" hidden>
+<input type="file" id="arquivo" accept=".lp,.txt" hidden>
 
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
-
 <script>
+const codigo = document.getElementById("codigo");
+const saida = document.getElementById("saida");
+const estado = document.getElementById("estado");
+const ponto = document.getElementById("ponto");
+const linhas = document.getElementById("linhas");
 
 let pyodide = null;
 let ocupado = false;
 
-const terminal = document.getElementById("terminal");
-const status = document.getElementById("status");
-const editor = document.getElementById("codigo");
-
-function escrever(texto) {
-    terminal.textContent += texto;
-    terminal.scrollTop = terminal.scrollHeight;
+function escrever(texto, classe = "") {
+    const elemento = document.createElement("div");
+    elemento.textContent = texto;
+    if (classe) elemento.className = classe;
+    saida.appendChild(elemento);
+    saida.scrollTop = saida.scrollHeight;
 }
 
-function limparTerminal() {
-    terminal.textContent = "";
+function atualizarLinhas() {
+    const quantidade = codigo.value.split("\n").length;
+    linhas.textContent = Array.from(
+        {length: quantidade},
+        (_, i) => i + 1
+    ).join("\n");
+
+    const linhaAtual =
+        codigo.value.substring(0, codigo.selectionStart)
+        .split("\n").length;
+
+    document.getElementById("posicao").textContent =
+        "Linha " + linhaAtual;
 }
 
-const comandos = {
+codigo.addEventListener("input", atualizarLinhas);
 
-    "Verdadeiro": "True",
-    "Falso": "False",
-    "Nulo": "None",
+codigo.addEventListener("click", atualizarLinhas);
+codigo.addEventListener("keyup", atualizarLinhas);
 
-    "verdadeiro": "True",
-    "falso": "False",
-    "nulo": "None",
+codigo.addEventListener("scroll", () => {
+    linhas.scrollTop = codigo.scrollTop;
+});
 
-    "se": "if",
-    "senaose": "elif",
-    "senãose": "elif",
-    "senao": "else",
-    "senão": "else",
+codigo.addEventListener("keydown", event => {
+    if (event.key === "Tab") {
+        event.preventDefault();
 
-    "enquanto": "while",
-    "para": "for",
-    "em": "in",
-    "e": "and",
-    "ou": "or",
-    "nao": "not",
-    "não": "not",
+        const inicio = codigo.selectionStart;
+        const fim = codigo.selectionEnd;
 
-    "definir": "def",
-    "retornar": "return",
-    "classe": "class",
-
-    "importar": "import",
-    "de": "from",
-    "como": "as",
-
-    "tentar": "try",
-    "exceto": "except",
-    "finalmente": "finally",
-    "levantar": "raise",
-
-    "passar": "pass",
-    "continuar": "continue",
-    "parar": "break",
-
-    "com": "with",
-    "global": "global",
-    "nao_local": "nonlocal",
-    "apagar": "del",
-    "afirmar": "assert",
-
-    "asincrono": "async",
-    "aguardar": "await",
-
-    "mostrar": "print",
-    "perguntar": "input",
-
-    "intervalo": "range",
-    "comprimento": "len",
-    "tipo": "type",
-
-    "texto": "str",
-    "numero": "int",
-    "decimal": "float",
-
-    "lista": "list",
-    "dicionario": "dict",
-    "conjunto": "set",
-    "tupla": "tuple",
-
-    "absoluto": "abs",
-    "soma": "sum",
-    "minimo": "min",
-    "maximo": "max",
-    "ordenar": "sorted",
-
-    "enumerar": "enumerate",
-    "zipar": "zip",
-    "mapear": "map",
-    "filtrar": "filter",
-
-    "qualquer": "any",
-    "todos": "all",
-    "reverter": "reversed",
-
-    "arredondar": "round",
-    "potencia": "pow",
-    "aberto": "open"
-};
-
-function traduzir(codigo) {
-
-    let resultado = "";
-    let i = 0;
-
-    while (i < codigo.length) {
-
-        let atual = codigo[i];
-
-        // Comentários
-        if (atual === "#") {
-
-            while (i < codigo.length && codigo[i] !== "\n") {
-                resultado += codigo[i];
-                i++;
-            }
-
-            continue;
-        }
-
-        // Textos entre aspas
-        if (atual === "'" || atual === '"') {
-
-            let aspas = atual;
-            let tripla =
-                codigo.slice(i, i + 3) === aspas.repeat(3);
-
-            let delimitador = tripla ? aspas.repeat(3) : aspas;
-
-            resultado += delimitador;
-            i += delimitador.length;
-
-            while (i < codigo.length) {
-
-                if (codigo[i] === "\\") {
-                    resultado += codigo.slice(i, i + 2);
-                    i += 2;
-                    continue;
-                }
-
-                if (codigo.slice(i, i + delimitador.length) === delimitador) {
-                    resultado += delimitador;
-                    i += delimitador.length;
-                    break;
-                }
-
-                resultado += codigo[i];
-                i++;
-            }
-
-            continue;
-        }
-
-        // Identificadores e comandos
-        if (/[\p{L}_]/u.test(atual)) {
-
-            let palavra = "";
-
-            while (
-                i < codigo.length &&
-                /[\p{L}\p{N}_]/u.test(codigo[i])
-            ) {
-                palavra += codigo[i];
-                i++;
-            }
-
-            resultado += comandos[palavra] || palavra;
-            continue;
-        }
-
-        resultado += atual;
-        i++;
+        codigo.setRangeText("    ", inicio, fim, "end");
+        atualizarLinhas();
     }
 
-    return resultado;
-}
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        executarCodigo();
+    }
+});
 
 async function iniciar() {
-
     try {
-
-        status.textContent = "Carregando motor Python...";
-
         pyodide = await loadPyodide();
 
+        const resposta = await fetch("./interpretador.py");
+
+        if (!resposta.ok) {
+            throw new Error(
+                "Não foi possível carregar interpretador.py"
+            );
+        }
+
+        const interpretador = await resposta.text();
+
+        await pyodide.runPythonAsync(interpretador);
+
         pyodide.setStdout({
-            batched: texto => escrever(texto + "\n")
+            batched: texto => escrever(texto)
         });
 
         pyodide.setStderr({
-            batched: texto => escrever("ERRO: " + texto + "\n")
+            batched: texto => escrever(texto, "saida-erro")
         });
 
         pyodide.globals.set(
-            "lipi_perguntar",
-            (mensagem) => window.prompt(String(mensagem ?? "")) ?? ""
+            "lipi_input",
+            pergunta => {
+                const resposta = window.prompt(
+                    String(pergunta ?? "")
+                );
+                return resposta ?? "";
+            }
         );
 
         await pyodide.runPythonAsync(`
 import builtins
-builtins.input = lipi_perguntar
+builtins.input = lipi_input
 `);
 
-        status.textContent = "LipiBR | Motor pronto!";
-        escrever("\nMotor pronto! Pode executar seu código.\n");
+        estado.textContent = "Motor pronto";
+        ponto.className = "ponto pronto";
+        saida.textContent = "";
+        escrever("LipiBR inicializada com sucesso.", "saida-sistema");
 
     } catch (erro) {
-
-        status.textContent = "Erro ao carregar o motor.";
-        escrever("\nNão foi possível carregar o Python: " + erro);
+        estado.textContent = "Erro ao carregar";
+        ponto.className = "ponto erro";
+        saida.textContent = "";
+        escrever(String(erro), "saida-erro");
     }
 }
 
-async function executar() {
-
+async function executarCodigo() {
     if (!pyodide) {
-        escrever("\nAguarde o motor terminar de carregar.\n");
+        escrever("O motor ainda está carregando.", "saida-erro");
         return;
     }
 
     if (ocupado) return;
 
     ocupado = true;
-    limparTerminal();
+    document.getElementById("executar").disabled = true;
 
-    status.textContent = "LipiBR | Executando...";
+    saida.textContent = "";
+    escrever("Executando programa.lp...", "saida-sistema");
 
     try {
+        pyodide.globals.set("codigo_usuario", codigo.value);
 
-        let codigoOriginal = editor.value;
-        let codigoPython = traduzir(codigoOriginal);
+        await pyodide.runPythonAsync(`
+ambiente_lipibr = {
+    "__name__": "__main__"
+}
 
-        await pyodide.runPythonAsync(codigoPython);
+codigo_traduzido = traduzir(codigo_usuario)
 
-        escrever("\nPrograma finalizado.\n");
-        status.textContent = "LipiBR | Execução concluída!";
+exec(
+    compile(codigo_traduzido, "<programa.lp>", "exec"),
+    ambiente_lipibr
+)
+`);
+
+        escrever("Programa finalizado.", "saida-sistema");
 
     } catch (erro) {
-
-        escrever("\nErro na LipiBR:\n" + erro + "\n");
-        status.textContent = "LipiBR | Erro na execução.";
+        escrever(String(erro), "saida-erro");
+    } finally {
+        ocupado = false;
+        document.getElementById("executar").disabled = false;
     }
-
-    ocupado = false;
 }
 
-function salvarArquivo() {
+document.getElementById("executar")
+    .addEventListener("click", executarCodigo);
 
-    let arquivo = new Blob(
-        [editor.value],
-        {type: "text/plain;charset=utf-8"}
-    );
+document.getElementById("limpar")
+    .addEventListener("click", () => {
+        saida.textContent = "";
+    });
 
-    let link = document.createElement("a");
+document.getElementById("abrir")
+    .addEventListener("click", () => {
+        document.getElementById("arquivo").click();
+    });
 
-    link.href = URL.createObjectURL(arquivo);
-    link.download = "programa.lp";
-    link.click();
+document.getElementById("arquivo")
+    .addEventListener("change", async event => {
+        const arquivo = event.target.files[0];
+        if (!arquivo) return;
 
-    URL.revokeObjectURL(link.href);
-}
+        codigo.value = await arquivo.text();
+        atualizarLinhas();
 
-function abrirArquivo() {
-    document.getElementById("arquivo").click();
-}
+        escrever(
+            "Arquivo " + arquivo.name + " carregado.",
+            "saida-sistema"
+        );
+    });
 
-document.getElementById("arquivo").addEventListener("change", evento => {
+document.getElementById("salvar")
+    .addEventListener("click", () => {
+        const arquivo = new Blob(
+            [codigo.value],
+            {type: "text/plain;charset=utf-8"}
+        );
 
-    let arquivo = evento.target.files[0];
+        const url = URL.createObjectURL(arquivo);
+        const link = document.createElement("a");
 
-    if (!arquivo) return;
+        link.href = url;
+        link.download = "programa.lp";
+        link.click();
 
-    if (!arquivo.name.toLowerCase().endsWith(".lp")) {
-        alert("Escolha um arquivo .lp");
-        return;
-    }
+        URL.revokeObjectURL(url);
+    });
 
-    let leitor = new FileReader();
-
-    leitor.onload = () => {
-        editor.value = leitor.result;
-        status.textContent = "Arquivo carregado: " + arquivo.name;
-    };
-
-    leitor.readAsText(arquivo);
-});
-
+atualizarLinhas();
 iniciar();
-
 </script>
 
 </body>
