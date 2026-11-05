@@ -1,208 +1,338 @@
-
-const modelosIniciais = {
-    "pagina.lhtml": `<pagina>
-    <cabecalho>
-        <titulo>Meu primeiro site</titulo>
-        <texto>Desenvolvido com LipiBR</texto>
-    </cabecalho>
-
-    <conteudo>
-        <subtitulo>Bem-vindo!</subtitulo>
-        <texto>Este site foi criado usando HTML em português.</texto>
-
-        <entrada id="nome" placeholder="Digite seu nome"></entrada>
-        <botao id="enviar">Enviar</botao>
-
-        <paragrafo id="resultado"></paragrafo>
-    </conteudo>
-</pagina>`,
-
-    "estilo.lcss": `pagina {
-    fundo: #101827;
-    cor: branco;
-    fonte: Arial, sans-serif;
-    alinhamento: centralizado;
-    espacamento: 30px;
-}
-
-titulo {
-    tamanho: 32px;
-    cor: #3794ff;
-}
-
-botao {
-    fundo: #087acc;
-    cor: branco;
-    borda: nenhum;
-    raio: 5px;
-    espacamento: 12px;
-    cursor: pointer;
-}
-
-entrada {
-    espacamento: 12px;
-    margem: 10px;
-}`,
-
-    "codigo.ljs": `let botao = document.getElementById("enviar");
-
-botao.addEventListener("click", function() {
-    let nome = document.getElementById("nome").value;
-
-    if (nome == "") {
-        alertar("Digite seu nome!");
-    } else {
-        document.getElementById("resultado").textContent =
-            "Olá, " + nome + "! Você está usando LipiBR.";
-
-        mostrar("Nome recebido: " + nome);
-    }
-});`
+const arquivos = {
+    "inicio.lhtml": ""
 };
 
-let arquivos = {};
-let arquivoAtual = "pagina.lhtml";
-let arquivosAbertos = [];
+let arquivoAtual = "inicio.lhtml";
 let editor = null;
+
+const armazenamento = "lipibr_studio_v2";
 
 const lista = document.getElementById("fileList");
 const abas = document.getElementById("tabs");
-const saida = document.getElementById("output");
-const preview = document.getElementById("preview");
-const statusTexto = document.getElementById("statusText");
+const terminal = document.getElementById("terminal");
+const visualizacao = document.getElementById("preview");
+const status = document.getElementById("statusText");
+const tipoArquivo = document.getElementById("fileType");
 
-function carregarDados() {
-    try {
-        const dados = JSON.parse(
-            localStorage.getItem("lipibr_projeto") || "{}"
-        );
-
-        arquivos = { ...modelosIniciais, ...dados };
-    } catch {
-        arquivos = { ...modelosIniciais };
-    }
-
-    arquivosAbertos = ["pagina.lhtml"];
+function escreverTerminal(mensagem) {
+    terminal.textContent = mensagem;
 }
 
-function salvarSilencioso() {
+function atualizarStatus(mensagem) {
+    status.textContent = mensagem;
+}
+
+function salvarProjeto() {
     if (editor && arquivoAtual) {
         arquivos[arquivoAtual] = editor.getValue();
     }
 
+    localStorage.setItem(armazenamento, JSON.stringify(arquivos));
+    atualizarStatus("Projeto salvo");
+}
+
+function carregarProjeto() {
+    const salvo = localStorage.getItem(armazenamento);
+
+    if (!salvo) return;
+
     try {
-        localStorage.setItem(
-            "lipibr_projeto",
-            JSON.stringify(arquivos)
-        );
+        const dados = JSON.parse(salvo);
+
+        if (dados && typeof dados === "object" && !Array.isArray(dados)) {
+            for (const [nome, conteudo] of Object.entries(dados)) {
+                if (
+                    typeof nome === "string" &&
+                    typeof conteudo === "string" &&
+                    /\.(lhtml|lcss|ljs)$/.test(nome)
+                ) {
+                    arquivos[nome] = conteudo;
+                }
+            }
+        }
     } catch {
-        saida.textContent = "Não foi possível salvar. O armazenamento pode estar cheio.";
+        escreverTerminal("Não foi possível carregar o projeto salvo.");
     }
 }
 
-function salvarDados() {
-    salvarSilencioso();
-    saida.textContent = "Projeto salvo neste navegador.";
-    statusTexto.textContent = "Salvo | UTF-8";
+function obterLinguagem(nome) {
+    if (nome.endsWith(".lhtml")) return "lipihtml";
+    if (nome.endsWith(".lcss")) return "lipicss";
+    if (nome.endsWith(".ljs")) return "lipijs";
+    return "plaintext";
 }
 
-function linguagemDoArquivo(nome) {
-    const extensao = nome.split(".").pop().toLowerCase();
-
-    const linguagens = {
-        html: "html",
-        css: "css",
-        js: "javascript",
-        lhtml: "lipihtml",
-        lcss: "lipicss",
-        ljs: "lipijs"
-    };
-
-    return linguagens[extensao] || "plaintext";
+function atualizarTipo() {
+    if (arquivoAtual.endsWith(".lhtml")) {
+        tipoArquivo.textContent = "LipiHTML";
+    } else if (arquivoAtual.endsWith(".lcss")) {
+        tipoArquivo.textContent = "LipiCSS";
+    } else if (arquivoAtual.endsWith(".ljs")) {
+        tipoArquivo.textContent = "LipiJS";
+    } else {
+        tipoArquivo.textContent = "Texto";
+    }
 }
 
-function configurarLinguagens() {
-    const definicoes = [
+function atualizarArquivos() {
+    lista.innerHTML = "";
+
+    Object.keys(arquivos).forEach(nome => {
+        const item = document.createElement("div");
+
+        item.className = "file";
+        item.textContent = nome;
+
+        if (nome === arquivoAtual) {
+            item.classList.add("active");
+        }
+
+        item.addEventListener("click", () => {
+            abrirArquivo(nome);
+        });
+
+        lista.appendChild(item);
+    });
+}
+
+function atualizarAbas() {
+    abas.innerHTML = "";
+
+    Object.keys(arquivos).forEach(nome => {
+        const aba = document.createElement("div");
+
+        aba.className = "tab";
+        aba.textContent = nome;
+
+        if (nome === arquivoAtual) {
+            aba.classList.add("active");
+        }
+
+        aba.addEventListener("click", () => {
+            abrirArquivo(nome);
+        });
+
+        abas.appendChild(aba);
+    });
+}
+
+function abrirArquivo(nome) {
+    if (!Object.prototype.hasOwnProperty.call(arquivos, nome)) {
+        return;
+    }
+
+    if (editor && arquivoAtual) {
+        arquivos[arquivoAtual] = editor.getValue();
+    }
+
+    arquivoAtual = nome;
+
+    editor.setValue(arquivos[nome]);
+    monaco.editor.setModelLanguage(
+        editor.getModel(),
+        obterLinguagem(nome)
+    );
+
+    atualizarArquivos();
+    atualizarAbas();
+    atualizarTipo();
+    atualizarStatus("Editando " + nome);
+}
+
+function criarArquivo() {
+    const nome = prompt(
+        "Nome do arquivo:\n\nUse .lhtml, .lcss ou .ljs"
+    );
+
+    if (!nome) return;
+
+    const nomeLimpo = nome.trim();
+
+    if (!/^[a-zA-Z0-9_-]+\.(lhtml|lcss|ljs)$/.test(nomeLimpo)) {
+        alert("Nome inválido. Use .lhtml, .lcss ou .ljs.");
+        return;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(arquivos, nomeLimpo)) {
+        alert("Esse arquivo já existe.");
+        return;
+    }
+
+    arquivos[nomeLimpo] = "";
+
+    abrirArquivo(nomeLimpo);
+    salvarProjeto();
+    escreverTerminal("Arquivo criado: " + nomeLimpo);
+}
+
+function executarProjeto() {
+    salvarProjeto();
+
+    try {
+        const codigo = LipiMotor.montarProjeto(arquivos);
+
+        visualizacao.srcdoc = codigo;
+
+        escreverTerminal(
+            "Projeto executado com sucesso.\n" +
+            "Arquivos processados: " +
+            Object.keys(arquivos).length
+        );
+
+        atualizarStatus("Projeto executado");
+    } catch (erro) {
+        escreverTerminal("Erro ao executar: " + erro.message);
+        atualizarStatus("Erro na execução");
+    }
+}
+
+function registrarLinguagens() {
+    const linguagens = [
         {
             id: "lipihtml",
+            extensao: ".lhtml",
             palavras: [
-                "pagina", "cabecalho", "rodape", "conteudo",
-                "secao", "artigo", "navegacao", "titulo",
-                "subtitulo", "titulo3", "texto", "paragrafo",
-                "botao", "caixa", "imagem", "link", "entrada",
-                "formulario", "rotulo", "lista", "item",
-                "quebra", "linha", "video"
-            ],
-            exemplo: `<pagina>
-    <cabecalho>
-        <titulo>Meu site</titulo>
-    </cabecalho>
-    <conteudo>
-        <texto>Olá, mundo!</texto>
-    </conteudo>
-</pagina>`
+                "site", "pagina", "cabecalho", "rodape",
+                "principal", "secao", "artigo", "navegacao",
+                "titulo", "subtitulo", "titulo3", "texto",
+                "paragrafo", "botao", "caixa", "imagem",
+                "link", "entrada", "formulario", "rotulo",
+                "lista", "item", "video"
+            ]
         },
         {
             id: "lipicss",
+            extensao: ".lcss",
             palavras: [
-                "fundo", "cor", "largura", "altura",
-                "espacamento", "margem", "alinhamento",
-                "borda", "raio", "sombra", "tamanho",
-                "fonte", "exibicao", "direcao",
-                "justificacao", "itens", "opacidade",
-                "posicao", "cursor", "transicao"
-            ],
-            exemplo: `pagina {
-    fundo: #101827;
-    cor: branco;
-    espacamento: 20px;
-}`
+                "fundo", "cor", "largura", "altura", "margem",
+                "espacamento", "alinhamento", "borda", "raio",
+                "sombra", "tamanho", "fonte", "exibicao",
+                "direcao", "justificacao", "itens", "cursor",
+                "opacidade", "posicao", "transicao"
+            ]
         },
         {
             id: "lipijs",
+            extensao: ".ljs",
             palavras: [
-                "mostrar", "perguntar", "alertar",
-                "let", "const", "var", "if", "else",
-                "for", "while", "function", "return",
-                "true", "false", "null"
-            ],
-            exemplo: `let nome = "Felipe";
-mostrar("Olá, " + nome);`
+                "mostrar", "alertar", "perguntar",
+                "obterElemento", "let", "const", "if",
+                "else", "for", "while", "function", "return"
+            ]
         }
     ];
 
-    definicoes.forEach(def => {
-        monaco.languages.register({ id: def.id });
-
-        monaco.languages.setMonarchTokensProvider(def.id, {
-            tokenizer: {
-                root: [
-                    [/\/\/.*$/, "comment"],
-                    [/"([^"\\]|\\.)*"/, "string"],
-                    [/'([^'\\]|\\.)*'/, "string"],
-                    [/\b(let|const|var|if|else|for|while|function|return|true|false|null)\b/, "keyword"],
-                    [/\b(mostrar|perguntar|alertar)\b/, "function"],
-                    [/\b[0-9]+\b/, "number"],
-                    [/[{}()\[\]]/, "@brackets"],
-                    [/[a-zA-ZÀ-ÿ_$][\wÀ-ÿ$]*/, "identifier"]
-                ]
-            }
+    linguagens.forEach(linguagem => {
+        monaco.languages.register({
+            id: linguagem.id,
+            extensions: [linguagem.extensao]
         });
+    });
 
-        monaco.languages.registerCompletionItemProvider(def.id, {
-            provideCompletionItems() {
-                const sugestoes = def.palavras.map(palavra => ({
+    monaco.languages.setMonarchTokensProvider("lipihtml", {
+        tokenizer: {
+            root: [
+                [/<!--/, "comment", "@comment"],
+                [/<\/?[a-zA-ZÀ-ÿ][\wÀ-ÿ-]*/, "tag"],
+                [/[a-zA-ZÀ-ÿ-]+(?=\s*=)/, "attribute.name"],
+                [/="[^"]*"/, "attribute.value"],
+                [/'[^']*'/, "attribute.value"],
+                [/>/, "delimiter"],
+                [/</, "delimiter"]
+            ],
+            comment: [
+                [/-->/, "comment", "@pop"],
+                [/./, "comment"]
+            ]
+        }
+    });
+
+    monaco.languages.setMonarchTokensProvider("lipicss", {
+        tokenizer: {
+            root: [
+                [/\/\*/, "comment", "@comment"],
+                [/[a-zA-ZÀ-ÿ-]+(?=\s*:)/, "attribute.name"],
+                [/#([0-9a-fA-F]{3,8})\b/, "number.hex"],
+                [/\d+(px|rem|em|%|vh|vw)?/, "number"],
+                [/[{}]/, "delimiter"],
+                [/:|;/, "delimiter"]
+            ],
+            comment: [
+                [/\*\//, "comment", "@pop"],
+                [/./, "comment"]
+            ]
+        }
+    });
+
+    monaco.languages.setMonarchTokensProvider("lipijs", {
+        tokenizer: {
+            root: [
+                [/\b(let|const|var|if|else|for|while|function|return|true|false|null)\b/, "keyword"],
+                [/\b(mostrar|alertar|perguntar|obterElemento)\b/, "function"],
+                [/"[^"]*"/, "string"],
+                [/'[^']*'/, "string"],
+                [/\d+/, "number"],
+                [/\/\/.*/, "comment"],
+                [/[{}()[\]]/, "delimiter"]
+            ]
+        }
+    });
+
+    linguagens.forEach(linguagem => {
+        monaco.languages.registerCompletionItemProvider(linguagem.id, {
+            provideCompletionItems: () => {
+                const sugestoes = linguagem.palavras.map(palavra => ({
                     label: palavra,
                     kind: monaco.languages.CompletionItemKind.Keyword,
-                    insertText: palavra
+                    insertText: palavra,
+                    detail: "Comando LipiBR"
                 }));
 
-                sugestoes.push({
-                    label: "modelo inicial",
-                    kind: monaco.languages.CompletionItemKind.Snippet,
-                    insertText: def.exemplo,
-                    detail: "Modelo de código LipiBR"
-                });
+                if (linguagem.id === "lipihtml") {
+                    sugestoes.push(
+                        {
+                            label: "titulo",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: "<titulo>${1:Meu título}</titulo>",
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            detail: "Criar título"
+                        },
+                        {
+                            label: "botao",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: '<botao identificador="${1:botao}">${2:Clique aqui}</botao>',
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            detail: "Criar botão"
+                        },
+                        {
+                            label: "entrada",
+                            kind: monaco.languages.CompletionItemKind.Snippet,
+                            insertText: '<entrada tipo="text" dica="${1:Digite aqui}">',
+                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            detail: "Criar campo de entrada"
+                        }
+                    );
+                }
+
+                if (linguagem.id === "lipicss") {
+                    sugestoes.push({
+                        label: "estilo",
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText: "${1:seletor} {\n\tcor: ${2:white};\n\tfundo: ${3:#222222};\n}",
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        detail: "Criar regra de estilo"
+                    });
+                }
+
+                if (linguagem.id === "lipijs") {
+                    sugestoes.push({
+                        label: "mostrar",
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertText: 'mostrar("${1:Olá}");',
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        detail: "Mostrar mensagem no console"
+                    });
+                }
 
                 return { suggestions: sugestoes };
             }
@@ -211,60 +341,39 @@ mostrar("Olá, " + nome);`
 }
 
 function iniciarEditor() {
-    if (typeof require === "undefined") {
-        saida.textContent = "Erro: Monaco não carregou. Verifique sua conexão.";
-        return;
-    }
-
-    window.MonacoEnvironment = {
-        getWorkerUrl: function() {
-            const codigo = `
-                self.MonacoEnvironment = {
-                    baseUrl: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/"
-                };
-                importScripts(
-                    "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/base/worker/workerMain.js"
-                );
-            `;
-
-            return "data:text/javascript;charset=utf-8," +
-                encodeURIComponent(codigo);
-        }
-    };
-
     require.config({
         paths: {
             vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
         }
     });
 
-    require(["vs/editor/editor.main"], function() {
-        configurarLinguagens();
+    window.MonacoEnvironment = {
+        getWorkerUrl: function () {
+            return URL.createObjectURL(
+                new Blob(
+                    [
+                        'self.MonacoEnvironment = { baseUrl: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/" };',
+                        'importScripts("https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/base/worker/workerMain.js");'
+                    ],
+                    { type: "text/javascript" }
+                )
+            );
+        }
+    };
 
-        monaco.editor.defineTheme("lipibr-dark", {
-            base: "vs-dark",
-            inherit: true,
-            rules: [],
-            colors: {
-                "editor.background": "#1e1e1e",
-                "editorLineNumber.foreground": "#858585",
-                "editorCursor.foreground": "#ffffff",
-                "editor.selectionBackground": "#264f78"
-            }
-        });
+    require(["vs/editor/editor.main"], function () {
+        registrarLinguagens();
 
         editor = monaco.editor.create(
             document.getElementById("editor"),
             {
-                value: arquivos[arquivoAtual],
-                language: linguagemDoArquivo(arquivoAtual),
-                theme: "lipibr-dark",
+                value: "",
+                language: "lipihtml",
+                theme: "vs-dark",
                 automaticLayout: true,
                 fontSize: 14,
-                fontFamily: "Consolas, monospace",
+                fontFamily: "Consolas, 'Courier New', monospace",
                 minimap: { enabled: true },
-                lineNumbers: "on",
-                roundedSelection: false,
                 scrollBeyondLastLine: false,
                 tabSize: 4,
                 insertSpaces: true,
@@ -273,208 +382,43 @@ function iniciarEditor() {
                 autoIndent: "full",
                 suggestOnTriggerCharacters: true,
                 quickSuggestions: true,
-                parameterHints: { enabled: true }
+                wordBasedSuggestions: "off",
+                formatOnPaste: true
             }
         );
 
         editor.onDidChangeModelContent(() => {
             arquivos[arquivoAtual] = editor.getValue();
-            salvarSilencioso();
-            statusTexto.textContent = "Editando | UTF-8";
+            atualizarStatus("Alterações não salvas");
         });
 
         editor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-            salvarDados
+            salvarProjeto
         );
 
-        abrirArquivo("pagina.lhtml");
-        saida.textContent = "LipiBR Studio pronto.\nEditor inteligente carregado.";
+        editor.addCommand(
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+            executarProjeto
+        );
+
+        carregarProjeto();
+
+        if (!Object.prototype.hasOwnProperty.call(arquivos, "inicio.lhtml")) {
+            arquivos["inicio.lhtml"] = "";
+        }
+
+        abrirArquivo("inicio.lhtml");
+
+        escreverTerminal(
+            "LipiBR Studio pronto.\n" +
+            "Crie seu código em português no arquivo inicio.lhtml."
+        );
     });
 }
 
-function classeArquivo(nome) {
-    if (nome.endsWith(".lhtml")) return ["L", "html-icon"];
-    if (nome.endsWith(".lcss")) return ["L", "css-icon"];
-    if (nome.endsWith(".ljs")) return ["L", "js-icon"];
-    if (nome.endsWith(".html")) return ["H", "html-icon"];
-    if (nome.endsWith(".css")) return ["C", "css-icon"];
-    if (nome.endsWith(".js")) return ["J", "js-icon"];
+document.getElementById("newFile").addEventListener("click", criarArquivo);
+document.getElementById("saveFiles").addEventListener("click", salvarProjeto);
+document.getElementById("runProject").addEventListener("click", executarProjeto);
 
-    return ["F", "lipi-icon"];
-}
-
-function desenharArquivos() {
-    lista.innerHTML = "";
-
-    Object.keys(arquivos).sort().forEach(nome => {
-        const botao = document.createElement("button");
-        const [letra, classe] = classeArquivo(nome);
-
-        botao.className =
-            "file" + (nome === arquivoAtual ? " active" : "");
-
-        const icone = document.createElement("span");
-        icone.className = "file-icon " + classe;
-        icone.textContent = letra;
-
-        botao.append(icone, document.createTextNode(nome));
-
-        botao.addEventListener("click", () => abrirArquivo(nome));
-        lista.appendChild(botao);
-    });
-}
-
-function desenharAbas() {
-    abas.innerHTML = "";
-
-    arquivosAbertos.forEach(nome => {
-        const botao = document.createElement("button");
-
-        botao.className =
-            "tab" + (nome === arquivoAtual ? " active" : "");
-
-        botao.textContent = nome;
-        botao.addEventListener("click", () => abrirArquivo(nome));
-
-        abas.appendChild(botao);
-    });
-}
-
-function abrirArquivo(nome) {
-    if (!editor || arquivos[nome] === undefined) return;
-
-    if (!arquivosAbertos.includes(nome)) {
-        arquivosAbertos.push(nome);
-    }
-
-    arquivoAtual = nome;
-    editor.setValue(arquivos[nome]);
-
-    monaco.editor.setModelLanguage(
-        editor.getModel(),
-        linguagemDoArquivo(nome)
-    );
-
-    desenharArquivos();
-    desenharAbas();
-
-    statusTexto.textContent = nome + " | UTF-8";
-}
-
-function novoArquivo() {
-    const nome = prompt(
-        "Nome do arquivo: exemplo.lhtml, exemplo.lcss ou exemplo.ljs"
-    );
-
-    if (!nome) return;
-
-    if (!/^[\wÀ-ÿ.-]+\.(html|css|js|lhtml|lcss|ljs)$/i.test(nome)) {
-        alert("Extensão inválida.");
-        return;
-    }
-
-    if (arquivos[nome] !== undefined) {
-        alert("Esse arquivo já existe.");
-        return;
-    }
-
-    arquivos[nome] = "";
-    salvarSilencioso();
-    abrirArquivo(nome);
-
-    saida.textContent = "Arquivo criado: " + nome;
-}
-
-function renomearArquivo() {
-    if (!arquivoAtual) return;
-
-    const nome = prompt("Novo nome:", arquivoAtual);
-
-    if (!nome || nome === arquivoAtual) return;
-
-    if (arquivos[nome] !== undefined) {
-        alert("Esse arquivo já existe.");
-        return;
-    }
-
-    arquivos[nome] = arquivos[arquivoAtual];
-    delete arquivos[arquivoAtual];
-
-    arquivosAbertos = arquivosAbertos.map(item =>
-        item === arquivoAtual ? nome : item
-    );
-
-    arquivoAtual = nome;
-    salvarSilencioso();
-    abrirArquivo(nome);
-}
-
-function excluirArquivo() {
-    if (!arquivoAtual) return;
-
-    if (!confirm("Excluir " + arquivoAtual + "?")) return;
-
-    delete arquivos[arquivoAtual];
-
-    arquivosAbertos = arquivosAbertos.filter(
-        item => item !== arquivoAtual
-    );
-
-    const proximo = Object.keys(arquivos)[0];
-
-    salvarSilencioso();
-
-    if (proximo) {
-        abrirArquivo(proximo);
-    } else {
-        arquivoAtual = "";
-        editor.setValue("");
-        abas.innerHTML = "";
-        desenharArquivos();
-    }
-}
-
-function executarProjeto() {
-    salvarSilencioso();
-
-    try {
-        const resultado = LipiMotor.montarProjeto(arquivos);
-
-        preview.srcdoc = resultado;
-        saida.textContent =
-            "Projeto LipiBR executado com sucesso.";
-
-        statusTexto.textContent = "Execução concluída";
-    } catch (erro) {
-        saida.textContent = "Erro: " + erro.message;
-        statusTexto.textContent = "Erro na execução";
-    }
-}
-
-document.getElementById("newFile")
-    .addEventListener("click", novoArquivo);
-
-document.getElementById("saveFiles")
-    .addEventListener("click", salvarDados);
-
-document.getElementById("runProject")
-    .addEventListener("click", executarProjeto);
-
-document.getElementById("refreshPreview")
-    .addEventListener("click", executarProjeto);
-
-document.getElementById("renameFile")
-    .addEventListener("click", renomearArquivo);
-
-document.getElementById("deleteFile")
-    .addEventListener("click", excluirArquivo);
-
-document.getElementById("newFolder")
-    .addEventListener("click", () => {
-        alert("A criação de pastas ainda não está implementada.");
-    });
-
-carregarDados();
-desenharArquivos();
 iniciarEditor();
