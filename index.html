@@ -31,10 +31,9 @@ body {
 }
 
 .logo {
-    color: #ffffff;
+    color: #fff;
     font-size: 15px;
     font-weight: 600;
-    letter-spacing: .3px;
 }
 
 .logo span {
@@ -48,7 +47,7 @@ body {
 
 button {
     background: #2d2d2d;
-    color: #cccccc;
+    color: #ccc;
     border: 1px solid #414141;
     padding: 7px 12px;
     cursor: pointer;
@@ -59,20 +58,16 @@ button:hover {
     background: #3a3a3a;
 }
 
-button.primary {
+.primary {
     background: #0e639c;
-    border-color: #1177bb;
     color: white;
-}
-
-button.primary:hover {
-    background: #1177bb;
+    border-color: #1177bb;
 }
 
 .workspace {
-    height: calc(100vh - 48px);
+    height: calc(100vh - 70px);
     display: grid;
-    grid-template-columns: 230px 1fr;
+    grid-template-columns: 220px minmax(0, 1fr);
 }
 
 .sidebar {
@@ -82,26 +77,22 @@ button.primary:hover {
 }
 
 .sidebar-title {
-    padding: 18px 15px 12px;
+    padding: 18px 14px 12px;
     font-size: 11px;
     font-weight: bold;
-    color: #bbbbbb;
     letter-spacing: 1px;
 }
 
 .file-actions {
-    display: flex;
-    gap: 5px;
     padding: 0 10px 12px;
 }
 
 .file-actions button {
-    flex: 1;
-    padding: 7px 4px;
+    width: 100%;
 }
 
 .file {
-    padding: 8px 15px;
+    padding: 9px 14px;
     font-size: 13px;
     cursor: pointer;
     border-left: 2px solid transparent;
@@ -125,20 +116,17 @@ button.primary:hover {
 
 .tabs {
     height: 38px;
+    flex-shrink: 0;
     background: #181818;
     display: flex;
     border-bottom: 1px solid #303030;
-    overflow-x: auto;
 }
 
 .tab {
-    min-width: 110px;
-    max-width: 180px;
-    padding: 11px 14px;
+    padding: 11px 16px;
     font-size: 12px;
     cursor: pointer;
     border-right: 1px solid #303030;
-    white-space: nowrap;
 }
 
 .tab.active {
@@ -147,59 +135,65 @@ button.primary:hover {
     border-top: 1px solid #3794ff;
 }
 
-.editor-area {
+.split {
     flex: 1;
     min-height: 0;
-    position: relative;
-}
-
-#editor {
-    width: 100%;
-    height: 100%;
-}
-
-.bottom {
-    height: 190px;
-    background: #181818;
-    border-top: 1px solid #303030;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 100px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-.panel {
+.editor-panel,
+.preview-panel {
     min-width: 0;
-    overflow: hidden;
+    min-height: 0;
     display: flex;
     flex-direction: column;
 }
 
-.panel + .panel {
-    border-left: 1px solid #303030;
+.editor-panel {
+    border-right: 1px solid #303030;
 }
 
 .panel-title {
     height: 32px;
+    flex-shrink: 0;
     padding: 10px 13px;
     font-size: 11px;
     color: #bbbbbb;
+    background: #181818;
     border-bottom: 1px solid #303030;
 }
 
-#terminal {
-    padding: 10px;
-    overflow: auto;
-    font-family: Consolas, monospace;
-    font-size: 12px;
-    color: #9cdcfe;
-    white-space: pre-wrap;
+#editor {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
 }
 
 #preview {
+    flex: 1;
+    min-height: 0;
     width: 100%;
-    height: 100%;
-    background: white;
     border: 0;
+    background: white;
+}
+
+.terminal {
+    height: 105px;
+    flex-shrink: 0;
+    background: #181818;
+    border-top: 1px solid #303030;
+    display: flex;
+    flex-direction: column;
+}
+
+#terminal {
+    padding: 9px 12px;
+    overflow: auto;
+    white-space: pre-wrap;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    color: #9cdcfe;
 }
 
 .statusbar {
@@ -208,27 +202,24 @@ button.primary:hover {
     color: white;
     font-size: 11px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     padding: 0 10px;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
     .workspace {
-        grid-template-columns: 150px 1fr;
+        grid-template-columns: 145px minmax(0, 1fr);
     }
 
-    .bottom {
-        grid-template-columns: 1fr;
-        height: 240px;
+    .split {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: 1fr 1fr;
     }
 
-    .bottom .panel:first-child {
-        display: none;
-    }
-
-    .actions button {
-        padding: 6px;
+    .editor-panel {
+        border-right: 0;
+        border-bottom: 1px solid #303030;
     }
 }
 </style>
@@ -251,41 +242,40 @@ button.primary:hover {
         <div class="sidebar-title">EXPLORADOR</div>
 
         <div class="file-actions">
-            <button id="newFile">Novo arquivo</button>
+            <button id="newFile">Novo arquivo .lp</button>
         </div>
 
         <div id="fileList"></div>
     </aside>
 
     <main class="main">
-
         <div id="tabs" class="tabs"></div>
 
-        <div class="editor-area">
-            <div id="editor"></div>
-        </div>
+        <div class="split">
 
-        <div class="bottom">
-
-            <section class="panel">
-                <div class="panel-title">SAÍDA</div>
-                <pre id="terminal">LipiBR Studio iniciado.</pre>
+            <section class="editor-panel">
+                <div class="panel-title">EDITOR — LIPIBR</div>
+                <div id="editor"></div>
             </section>
 
-            <section class="panel">
+            <section class="preview-panel">
                 <div class="panel-title">PRÉ-VISUALIZAÇÃO</div>
                 <iframe id="preview" title="Pré-visualização"></iframe>
             </section>
 
         </div>
 
+        <section class="terminal">
+            <div class="panel-title">SAÍDA</div>
+            <pre id="terminal">LipiBR Studio iniciado.</pre>
+        </section>
     </main>
 
 </div>
 
 <footer class="statusbar">
     <span id="statusText">LipiBR — pronto</span>
-    <span id="fileType">LipiHTML</span>
+    <span>.lp</span>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
