@@ -1,50 +1,74 @@
 
-import sys
-import re
-import ast
+import io
+import tokenize
 
 COMANDOS = {
-    "Verdadeiro": "True",
-    "Falso": "False",
-    "Nulo": "None",
-    "senaose": "elif",
-    "senao": "else",
+    # Estrutura
     "se": "if",
+    "senao": "else",
+    "senaose": "elif",
     "enquanto": "while",
     "para": "for",
     "em": "in",
+    "e": "and",
+    "ou": "or",
+    "nao": "not",
+    "não": "not",
+    "eh": "is",
+    "é": "is",
+    "nao_e": "is not",
+
+    # Funções e classes
     "definir": "def",
     "retornar": "return",
-    "importar": "import",
-    "de": "from",
-    "como": "as",
     "classe": "class",
-    "tentar": "try",
-    "exceto": "except",
-    "finalmente": "finally",
-    "levantar": "raise",
     "passar": "pass",
     "continuar": "continue",
     "parar": "break",
-    "com": "with",
+    "apagar": "del",
     "global": "global",
     "nao_local": "nonlocal",
-    "apagar": "del",
     "afirmar": "assert",
+    "levantar": "raise",
+
+    # Exceções
+    "tentar": "try",
+    "exceto": "except",
+    "finalmente": "finally",
+
+    # Importações
+    "importar": "import",
+    "de": "from",
+    "como": "as",
+
+    # Contexto e assincronia
+    "com": "with",
     "asincrono": "async",
     "aguardar": "await",
+
+    # Entrada e saída
     "mostrar": "print",
+    "imprimir": "print",
     "perguntar": "input",
-    "intervalo": "range",
-    "comprimento": "len",
-    "tipo": "type",
+
+    # Tipos e funções comuns
     "texto": "str",
     "numero": "int",
     "decimal": "float",
+    "complexo": "complex",
     "lista": "list",
+    "tupla": "tuple",
     "dicionario": "dict",
     "conjunto": "set",
-    "tupla": "tuple",
+    "verdadeiro": "True",
+    "falso": "False",
+    "nulo": "None",
+
+    "comprimento": "len",
+    "intervalo": "range",
+    "tipo": "type",
+    "ajuda": "help",
+    "id": "id",
     "absoluto": "abs",
     "soma": "sum",
     "minimo": "min",
@@ -57,103 +81,43 @@ COMANDOS = {
     "qualquer": "any",
     "todos": "all",
     "reverter": "reversed",
-    "ajuda": "help",
-    "id": "id",
-    "representar": "repr",
     "arredondar": "round",
     "potencia": "pow",
     "aberto": "open",
 }
 
-def traduzir_linha(linha):
+
+def traduzir(codigo):
     resultado = []
-    palavra = ""
-    aspas = None
-    escapar = False
 
-    def converter(p):
-        return COMANDOS.get(p, p)
+    tokens = tokenize.generate_tokens(
+        io.StringIO(codigo).readline
+    )
 
-    for caractere in linha:
-        if aspas:
-            palavra += caractere
+    for token in tokens:
+        if token.type == tokenize.NAME:
+            palavra = token.string
 
-            if escapar:
-                escapar = False
-            elif caractere == "\\":
-                escapar = True
-            elif caractere == aspas:
-                aspas = None
-                resultado.append(palavra)
-                palavra = ""
+            if palavra in COMANDOS:
+                token = token._replace(
+                    string=COMANDOS[palavra]
+                )
 
-        elif caractere in ("'", '"'):
-            if palavra:
-                resultado.append(converter(palavra))
-                palavra = ""
-            aspas = caractere
-            palavra = caractere
+        resultado.append(token)
 
-        elif caractere.isalnum() or caractere == "_":
-            palavra += caractere
-
-        else:
-            if palavra:
-                resultado.append(converter(palavra))
-                palavra = ""
-            resultado.append(caractere)
-
-    if palavra:
-        resultado.append(converter(palavra))
-
-    return "".join(resultado)
+    return tokenize.untokenize(resultado)
 
 
-def executar(codigo):
-    linhas = codigo.splitlines()
-    codigo_python = []
+def executar(codigo, ambiente=None):
+    codigo_python = traduzir(codigo)
 
-    for linha in linhas:
-        if linha.strip().startswith("#"):
-            codigo_python.append(linha)
-        else:
-            codigo_python.append(traduzir_linha(linha))
+    if ambiente is None:
+        ambiente = {}
 
-    programa = "\n".join(codigo_python)
+    exec(codigo_python, ambiente)
 
-    try:
-        arvore = ast.parse(programa, filename="<programa.lp>")
-        exec(compile(arvore, "<programa.lp>", "exec"), {"__name__": "__main__"})
-    except Exception as erro:
-        print("Erro na Lipi:", erro)
-
-
-def executar_arquivo(caminho):
-    if not caminho.endswith(".lp"):
-        print("Erro: os programas Lipi devem terminar em .lp")
-        return
-
-    try:
-        with open(caminho, "r", encoding="utf-8") as arquivo:
-            executar(arquivo.read())
-    except FileNotFoundError:
-        print("Erro: arquivo não encontrado:", caminho)
+    return ambiente
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        executar_arquivo(sys.argv[1])
-    else:
-        print("LipiBR 1.0")
-        print("Digite sair para encerrar.")
-
-        while True:
-            try:
-                linha = input("Lipi > ")
-
-                if linha.strip().lower() == "sair":
-                    break
-
-                executar(linha)
-            except KeyboardInterrupt:
-                break
+    print("Interpretador LipiBR carregado!")
