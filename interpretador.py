@@ -3,10 +3,12 @@ import io
 import tokenize
 
 COMANDOS = {
-    # Estrutura
+    # Estrutura e condições
     "se": "if",
     "senao": "else",
+    "senão": "else",
     "senaose": "elif",
+    "senãose": "elif",
     "enquanto": "while",
     "para": "for",
     "em": "in",
@@ -15,8 +17,6 @@ COMANDOS = {
     "nao": "not",
     "não": "not",
     "eh": "is",
-    "é": "is",
-    "nao_e": "is not",
 
     # Funções e classes
     "definir": "def",
@@ -31,7 +31,7 @@ COMANDOS = {
     "afirmar": "assert",
     "levantar": "raise",
 
-    # Exceções
+    # Tratamento de erros
     "tentar": "try",
     "exceto": "except",
     "finalmente": "finally",
@@ -46,12 +46,17 @@ COMANDOS = {
     "asincrono": "async",
     "aguardar": "await",
 
+    # Valores
+    "verdadeiro": "True",
+    "falso": "False",
+    "nulo": "None",
+
     # Entrada e saída
     "mostrar": "print",
     "imprimir": "print",
     "perguntar": "input",
 
-    # Tipos e funções comuns
+    # Tipos
     "texto": "str",
     "numero": "int",
     "decimal": "float",
@@ -60,15 +65,13 @@ COMANDOS = {
     "tupla": "tuple",
     "dicionario": "dict",
     "conjunto": "set",
-    "verdadeiro": "True",
-    "falso": "False",
-    "nulo": "None",
 
+    # Funções internas
     "comprimento": "len",
     "intervalo": "range",
     "tipo": "type",
     "ajuda": "help",
-    "id": "id",
+    "identidade": "id",
     "absoluto": "abs",
     "soma": "sum",
     "minimo": "min",
@@ -112,12 +115,11 @@ def executar(codigo, ambiente=None):
     codigo_python = traduzir(codigo)
 
     if ambiente is None:
-        ambiente = {}
+        ambiente = {"__name__": "__main__"}
 
-    exec(codigo_python, ambiente)
+    exec(
+        compile(codigo_python, "<LipiBR>", "exec"),
+        ambiente
+    )
 
     return ambiente
-
-
-if __name__ == "__main__":
-    print("Interpretador LipiBR carregado!")
