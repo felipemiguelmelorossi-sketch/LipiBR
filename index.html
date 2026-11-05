@@ -7,463 +7,120 @@
 <title>LipiBR Studio</title>
 
 <style>
-* { box-sizing: border-box; }
-
-html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
-    background: #1e1e1e;
-    color: #cccccc;
-    font-family: "Segoe UI", Arial, sans-serif;
-    font-size: 13px;
-}
-
-button, input, select {
-    font: inherit;
-}
-
-button {
-    color: inherit;
-    cursor: pointer;
-}
-
-.topbar {
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
-    background: #181818;
-    border-bottom: 1px solid #303030;
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    font-weight: 600;
-}
-
-.brand-mark {
-    color: #3794ff;
-    font-size: 17px;
-    font-weight: 700;
-}
-
-.menu {
-    display: flex;
-    gap: 17px;
-    color: #bbbbbb;
-}
-
-.menu button {
-    border: 0;
-    background: transparent;
-    padding: 4px;
-}
-
-.menu button:hover {
-    color: white;
-}
-
-.actions {
-    display: flex;
-    gap: 6px;
-}
-
-.actions button, .preview-head button {
-    background: #2d2d2d;
-    border: 1px solid #414141;
-    padding: 5px 10px;
-    font-size: 12px;
-}
-
-.actions button:hover, .preview-head button:hover {
-    background: #3a3a3a;
-}
-
-.actions .primary {
-    background: #0e639c;
-    border-color: #0e639c;
-    color: white;
-}
-
-.workspace {
-    height: calc(100% - 60px);
-    display: grid;
-    grid-template-columns: 48px 220px minmax(300px, 1fr) minmax(260px, 34%);
-}
-
-.activity {
-    background: #181818;
-    border-right: 1px solid #303030;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 8px;
-}
-
-.activity button {
-    width: 48px;
-    height: 48px;
-    border: 0;
-    border-left: 2px solid transparent;
-    background: transparent;
-    color: #858585;
-    font-size: 21px;
-}
-
-.activity button:hover {
-    color: white;
-}
-
-.activity button.selected {
-    color: white;
-    border-left-color: white;
-}
-
-.explorer {
-    background: #181818;
-    border-right: 1px solid #303030;
-    overflow: auto;
-}
-
-.explorer-title {
-    height: 36px;
-    padding: 12px 14px;
-    font-size: 11px;
-    letter-spacing: .7px;
-}
-
-.project-title {
-    padding: 9px 12px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.file-list {
-    padding-bottom: 10px;
-}
-
-.file {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: 27px;
-    padding: 0 10px 0 25px;
-    gap: 8px;
-    text-align: left;
-    border: 0;
-    background: transparent;
-    color: #cccccc;
-    font-size: 12px;
-}
-
-.file:hover {
-    background: #252526;
-}
-
-.file.active {
-    background: #37373d;
-    color: white;
-}
-
-.file-icon {
-    width: 13px;
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.html-icon { color: #e37933; }
-.css-icon { color: #519aba; }
-.js-icon { color: #e5c07b; }
-.lp-icon { color: #b180d7; }
-
-.editor-panel {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    background: #1e1e1e;
-}
-
-.tabs {
-    height: 36px;
-    display: flex;
-    flex-shrink: 0;
-    background: #181818;
-    border-bottom: 1px solid #303030;
-    overflow-x: auto;
-}
-
-.tab {
-    min-width: 125px;
-    height: 36px;
-    padding: 10px 14px;
-    border: 0;
-    border-right: 1px solid #303030;
-    border-top: 1px solid #007acc;
-    background: #1e1e1e;
-    color: white;
-    text-align: left;
-    font-size: 12px;
-}
-
-.tab:not(.active) {
-    border-top-color: transparent;
-    background: #181818;
-    color: #999999;
-}
-
-#editor {
-    flex: 1;
-    min-height: 0;
-    width: 100%;
-}
-
-.bottom-panel {
-    height: 155px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    background: #181818;
-    border-top: 1px solid #303030;
-}
-
-.bottom-tabs {
-    height: 35px;
-    display: flex;
-    align-items: center;
-    gap: 22px;
-    padding: 0 15px;
-    border-bottom: 1px solid #303030;
-    font-size: 11px;
-}
-
-.bottom-tabs button {
-    height: 35px;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    color: #999999;
-}
-
-.bottom-tabs button.active {
-    color: white;
-    border-bottom: 1px solid #007acc;
-}
-
-#output {
-    flex: 1;
-    overflow: auto;
-    margin: 0;
-    padding: 10px 14px;
-    color: #cccccc;
-    white-space: pre-wrap;
-    font: 12px/20px Consolas, monospace;
-}
-
-.preview {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    background: #181818;
-    border-left: 1px solid #303030;
-}
-
-.preview-head {
-    height: 36px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
-    border-bottom: 1px solid #303030;
-    font-size: 11px;
-}
-
-#preview {
-    flex: 1;
-    width: 100%;
-    border: 0;
-    background: white;
-}
-
-.statusbar {
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 10px;
-    background: #007acc;
-    color: white;
-    font-size: 11px;
-}
-
-.status-group {
-    display: flex;
-    gap: 15px;
-}
-
-.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 10;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: #0009;
-}
-
-.modal.open {
-    display: flex;
-}
-
-.modal-box {
-    width: min(420px, 90vw);
-    padding: 18px;
-    background: #252526;
-    border: 1px solid #454545;
-    box-shadow: 0 12px 35px #0008;
-}
-
-.modal-box h2 {
-    margin: 0 0 15px;
-    font-size: 15px;
-    font-weight: 500;
-}
-
-.modal-box input, .modal-box select {
-    width: 100%;
-    padding: 9px;
-    margin-bottom: 12px;
-    background: #1e1e1e;
-    color: white;
-    border: 1px solid #555;
-    outline: none;
-}
-
-.modal-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.modal-buttons button {
-    padding: 7px 13px;
-    border: 1px solid #555;
-    background: #333;
-}
-
-.modal-buttons .confirm {
-    background: #0e639c;
-    border-color: #0e639c;
-}
-
-@media(max-width: 950px) {
-    .workspace {
-        grid-template-columns: 42px 180px minmax(250px, 1fr);
-    }
-    .preview { display: none; }
-}
-
-@media(max-width: 650px) {
-    .workspace {
-        grid-template-columns: 38px minmax(0, 1fr);
-    }
-    .explorer, .menu { display: none; }
-    .actions button { padding: 5px 6px; }
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{height:100vh;overflow:hidden;background:#1e1e1e;color:#ccc;font:13px "Segoe UI",Arial,sans-serif}
+button{font:inherit;cursor:pointer;color:inherit}
+.topbar{height:35px;background:#181818;border-bottom:1px solid #303030;display:flex;align-items:center;justify-content:space-between;padding:0 12px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;color:#eee}
+.brand-mark{color:#3794ff;font-size:17px;font-weight:700}
+.menu{display:flex;gap:15px;color:#aaa}
+.menu span{cursor:pointer}
+.menu span:hover{color:#fff}
+.actions{display:flex;gap:6px}
+.actions button{background:#2d2d2d;border:1px solid #414141;padding:4px 10px;font-size:12px}
+.actions button:hover{background:#3a3a3a}
+.actions .run{background:#0e639c;border-color:#0e639c;color:white}
+.workspace{height:calc(100vh - 59px);display:grid;grid-template-columns:48px 220px minmax(300px,1fr) minmax(250px,34%)}
+.activity{background:#181818;border-right:1px solid #303030;display:flex;flex-direction:column;align-items:center}
+.activity button{width:47px;height:48px;background:none;border:0;border-left:2px solid transparent;color:#858585;font-size:19px}
+.activity button.active{border-left-color:#fff;color:#fff}
+.activity button:hover{color:#fff}
+.explorer{background:#181818;border-right:1px solid #303030;overflow:auto}
+.explorer-title{height:36px;padding:12px 14px;font-size:11px;letter-spacing:.7px}
+.project-title{height:29px;padding:7px 10px;font-size:11px;font-weight:600}
+.file-list{padding-bottom:10px}
+.file{width:100%;height:27px;padding:0 8px 0 25px;text-align:left;background:none;border:0;font-size:12px}
+.file:hover{background:#252526}
+.file.active{background:#37373d;color:#fff}
+.file-icon{display:inline-block;width:19px;font-weight:bold}
+.html-icon{color:#e37933}.css-icon{color:#519aba}.js-icon{color:#e5c07b}.lipi-icon{color:#b180d7}
+.explorer-actions{display:flex;gap:5px;padding:9px;border-top:1px solid #303030}
+.explorer-actions button{background:#252526;border:1px solid #414141;padding:5px 7px;font-size:11px}
+.editor-area{min-width:0;display:flex;flex-direction:column}
+.tabs{height:36px;display:flex;overflow-x:auto;background:#181818;border-bottom:1px solid #303030}
+.tab{height:36px;min-width:115px;padding:10px 13px;background:#1e1e1e;border:0;border-right:1px solid #303030;border-top:1px solid #007acc;text-align:left;white-space:nowrap;font-size:12px}
+.tab:not(.active){background:#2d2d2d;color:#999;border-top-color:transparent}
+.editor-wrap{flex:1;min-height:0;position:relative}
+#editor{position:absolute;inset:0}
+#welcome{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#777}
+.bottom-panel{height:165px;flex-shrink:0;background:#181818;border-top:1px solid #303030;display:flex;flex-direction:column}
+.panel-tabs{height:35px;display:flex;align-items:center;gap:22px;padding:0 15px;border-bottom:1px solid #303030;font-size:11px}
+.panel-tabs span{height:35px;display:flex;align-items:center}
+.panel-tabs .selected{color:#fff;border-bottom:1px solid #007acc}
+#output{flex:1;overflow:auto;padding:12px 15px;color:#ccc;font:12px/20px Consolas,monospace;white-space:pre-wrap}
+.preview{min-width:0;display:flex;flex-direction:column;background:#181818;border-left:1px solid #303030}
+.preview-head{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid #303030;font-size:11px}
+.preview-head button{background:#2d2d2d;border:1px solid #414141;padding:4px 9px;font-size:11px}
+#preview{flex:1;width:100%;border:0;background:white}
+.status{height:24px;background:#007acc;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:11px}
+@media(max-width:950px){.workspace{grid-template-columns:42px 180px 1fr}.preview{display:none}}
+@media(max-width:650px){.workspace{grid-template-columns:38px 1fr}.explorer{display:none}.menu{display:none}}
 </style>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
 </head>
 
 <body>
-
 <header class="topbar">
-    <div class="brand">
-        <span class="brand-mark">L</span>
-        <span>LipiBR Studio</span>
-    </div>
-
+    <div class="brand"><span class="brand-mark">L</span><span>LipiBR Studio</span></div>
     <nav class="menu">
-        <button id="menuArquivo">Arquivo</button>
-        <button id="menuEditar">Editar</button>
-        <button id="menuExibir">Exibir</button>
-        <button id="menuAjuda">Ajuda</button>
+        <span>Arquivo</span><span>Editar</span><span>Exibir</span><span>Executar</span><span>Ajuda</span>
     </nav>
-
     <div class="actions">
         <button id="newFile">Novo arquivo</button>
-        <button id="newFolder">Nova pasta</button>
-        <button id="save">Salvar</button>
-        <button class="primary" id="run">Executar</button>
+        <button id="saveFiles">Salvar</button>
+        <button class="run" id="runProject">Executar</button>
     </div>
 </header>
 
 <main class="workspace">
-
     <aside class="activity">
-        <button class="selected" title="Explorador" aria-label="Explorador">▤</button>
-        <button title="Pesquisar" aria-label="Pesquisar">⌕</button>
-        <button title="Extensões" aria-label="Extensões">▦</button>
+        <button class="active" title="Explorador">▤</button>
+        <button title="Pesquisar">⌕</button>
+        <button title="Extensões">▦</button>
     </aside>
 
     <aside class="explorer">
         <div class="explorer-title">EXPLORADOR</div>
         <div class="project-title">▼ MEU PROJETO</div>
         <div class="file-list" id="fileList"></div>
+        <div class="explorer-actions">
+            <button id="newFolder">Nova pasta</button>
+            <button id="renameFile">Renomear</button>
+            <button id="deleteFile">Excluir</button>
+        </div>
     </aside>
 
-    <section class="editor-panel">
+    <section class="editor-area">
         <div class="tabs" id="tabs"></div>
-        <div id="editor"></div>
-
+        <div class="editor-wrap">
+            <div id="editor"></div>
+            <div id="welcome">Selecione um arquivo para começar.</div>
+        </div>
         <section class="bottom-panel">
-            <div class="bottom-tabs">
-                <button class="active">TERMINAL</button>
-                <button>SAÍDA</button>
-                <button>PROBLEMAS</button>
+            <div class="panel-tabs">
+                <span class="selected">TERMINAL</span>
+                <span>SAÍDA</span>
+                <span>PROBLEMAS</span>
             </div>
-            <pre id="output">LipiBR Studio iniciado. Aguardando execução.</pre>
+            <pre id="output">LipiBR Studio iniciado.
+Selecione um arquivo e comece a programar.</pre>
         </section>
     </section>
 
     <section class="preview">
         <div class="preview-head">
             <span>PRÉ-VISUALIZAÇÃO</span>
-            <button id="refresh">Atualizar</button>
+            <button id="refreshPreview">Atualizar</button>
         </div>
         <iframe id="preview" sandbox="allow-scripts"></iframe>
     </section>
-
 </main>
 
-<footer class="statusbar">
-    <div class="status-group">
-        <span>LipiBR</span>
-        <span id="statusFile">pagina.lhtml</span>
-    </div>
-    <div class="status-group">
-        <span>UTF-8</span>
-        <span>Espaços: 4</span>
-        <span id="statusMessage">Pronto</span>
-    </div>
+<footer class="status">
+    <span>LipiBR</span>
+    <span id="statusText">Pronto | UTF-8 | Espaços: 4</span>
 </footer>
 
-<div class="modal" id="fileModal">
-    <div class="modal-box">
-        <h2 id="modalTitle">Novo arquivo</h2>
-        <input id="newName" placeholder="Nome do arquivo">
-        <div class="modal-buttons">
-            <button id="cancelModal">Cancelar</button>
-            <button class="confirm" id="confirmModal">Criar</button>
-        </div>
-    </div>
-</div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
 <script src="motor.js"></script>
 <script src="studio.js"></script>
 </body>
