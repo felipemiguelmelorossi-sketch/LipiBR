@@ -13,21 +13,21 @@
 }
 
 body {
+    height: 100vh;
+    overflow: hidden;
     background: #1e1e1e;
     color: #cccccc;
     font-family: Arial, sans-serif;
-    height: 100vh;
-    overflow: hidden;
 }
 
 .topbar {
     height: 48px;
-    background: #181818;
-    border-bottom: 1px solid #303030;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 16px;
+    background: #181818;
+    border-bottom: 1px solid #303030;
 }
 
 .logo {
@@ -46,22 +46,22 @@ body {
 }
 
 button {
-    background: #2d2d2d;
-    color: #ccc;
+    padding: 7px 13px;
     border: 1px solid #414141;
-    padding: 7px 12px;
+    background: #2d2d2d;
+    color: #ddd;
     cursor: pointer;
     font-size: 12px;
 }
 
 button:hover {
-    background: #3a3a3a;
+    background: #3b3b3b;
 }
 
-.primary {
+button.primary {
     background: #0e639c;
-    color: white;
     border-color: #1177bb;
+    color: white;
 }
 
 .workspace {
@@ -71,9 +71,9 @@ button:hover {
 }
 
 .sidebar {
+    overflow-y: auto;
     background: #181818;
     border-right: 1px solid #303030;
-    overflow-y: auto;
 }
 
 .sidebar-title {
@@ -109,16 +109,17 @@ button:hover {
 }
 
 .main {
-    min-width: 0;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    min-height: 0;
 }
 
 .tabs {
     height: 38px;
     flex-shrink: 0;
-    background: #181818;
     display: flex;
+    background: #181818;
     border-bottom: 1px solid #303030;
 }
 
@@ -144,10 +145,10 @@ button:hover {
 
 .editor-panel,
 .preview-panel {
-    min-width: 0;
-    min-height: 0;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    min-height: 0;
 }
 
 .editor-panel {
@@ -166,25 +167,44 @@ button:hover {
 
 #editor {
     flex: 1;
-    min-height: 0;
     width: 100%;
+    min-height: 0;
+}
+
+/* Mantém os nomes das sugestões visíveis no Monaco */
+.monaco-editor .suggest-widget {
+    min-width: 340px !important;
+}
+
+.monaco-editor .suggest-widget .monaco-list-row {
+    color: #eeeeee !important;
+}
+
+.monaco-editor .suggest-widget .monaco-list-row .label-name {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+.monaco-editor .suggest-widget .monaco-list-row .details {
+    color: #bbbbbb !important;
+    opacity: 1 !important;
 }
 
 #preview {
     flex: 1;
-    min-height: 0;
     width: 100%;
+    min-height: 0;
     border: 0;
     background: white;
 }
 
 .terminal {
-    height: 105px;
+    height: 90px;
     flex-shrink: 0;
-    background: #181818;
-    border-top: 1px solid #303030;
     display: flex;
     flex-direction: column;
+    background: #181818;
+    border-top: 1px solid #303030;
 }
 
 #terminal {
@@ -198,13 +218,13 @@ button:hover {
 
 .statusbar {
     height: 22px;
-    background: #007acc;
-    color: white;
-    font-size: 11px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 10px;
+    background: #007acc;
+    color: white;
+    font-size: 11px;
 }
 
 @media (max-width: 800px) {
@@ -213,7 +233,7 @@ button:hover {
     }
 
     .split {
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: 1fr;
         grid-template-rows: 1fr 1fr;
     }
 
