@@ -1,27 +1,50 @@
 
 # LipiBR
 
-LipiBR é uma linguagem experimental de programação em português brasileiro, inspirada em Python.
+LipiBR é uma linguagem experimental de programação
+com comandos em português, baseada no Python.
 
-## Extensão
+## Recursos
 
-.lp
+- Arquivos .lp
+- Comandos em português
+- Condições
+- Repetições
+- Funções
+- Classes
+- Listas e dicionários
+- Tratamento de erros
+- Importações
+- Execução pelo navegador
+
+## Como executar
+
+1. Abra o editor LipiBR.
+2. Escreva seu código.
+3. Pressione Executar.
+4. Veja o resultado no terminal.
+
+## Tecnologia
+
+- Python
+- Pyodide
+- HTML
+- CSS
+- JavaScript
 
 ## Exemplos
 
-mostrar("Olá, mundo!")
-
+```python
 nome = perguntar("Qual seu nome?")
 
 se nome:
-    mostrar("Bem-vindo", nome)
+    mostrar("Olá,", nome)
 senao:
-    mostrar("Nome não informado")
+    mostrar("Olá, visitante!")
+```
 
-## Execução
+## Situação
 
-python interpretador.py exemplo.lp
-
-## Status
-
-Versão experimental 1.0.
+LipiBR está em desenvolvimento.
+Ela utiliza o interpretador Python por meio do Pyodide.
+Nem todos os recursos do Python são compatíveis com o navegador.
