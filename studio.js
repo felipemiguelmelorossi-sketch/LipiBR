@@ -1,3 +1,4 @@
+
 const CHAVE = "lipibr_projeto_lp_v3";
 
 let arquivos = { "inicio.lp": "" };
@@ -40,9 +41,12 @@ function escreverSaida(texto) {
     terminal.textContent = texto;
 }
 
+/* CARREGAMENTO E SALVAMENTO */
+
 function carregarProjeto() {
     try {
         const salvo = localStorage.getItem(CHAVE);
+
         if (!salvo) return;
 
         const dados = JSON.parse(salvo);
@@ -62,11 +66,11 @@ function carregarProjeto() {
             }
         }
 
-        if (Object.keys(validos).length > 0) {
+        if (Object.keys(validos).length) {
             arquivos = validos;
         }
     } catch (erro) {
-        escreverSaida("Não foi possível carregar o projeto salvo.");
+        escreverSaida("Erro ao carregar o projeto.");
     }
 
     if (!Object.keys(arquivos).length) {
@@ -80,9 +84,12 @@ function salvarProjeto() {
     }
 
     localStorage.setItem(CHAVE, JSON.stringify(arquivos));
+
     status.textContent = "Projeto salvo";
     escreverSaida("Projeto salvo com sucesso.");
 }
+
+/* ARQUIVOS */
 
 function atualizarExplorador() {
     lista.innerHTML = "";
@@ -90,24 +97,26 @@ function atualizarExplorador() {
 
     Object.keys(arquivos).forEach(nome => {
         const item = document.createElement("div");
+
         item.className = "file";
+        item.textContent = nome;
 
         if (nome === arquivoAtual) {
             item.classList.add("active");
         }
 
-        item.textContent = nome;
         item.addEventListener("click", () => abrirArquivo(nome));
         lista.appendChild(item);
 
         const aba = document.createElement("div");
+
         aba.className = "tab";
+        aba.textContent = nome;
 
         if (nome === arquivoAtual) {
             aba.classList.add("active");
         }
 
-        aba.textContent = nome;
         aba.addEventListener("click", () => abrirArquivo(nome));
         abas.appendChild(aba);
     });
@@ -123,7 +132,10 @@ function abrirArquivo(nome) {
     }
 
     arquivoAtual = nome;
-    editor.setValue(arquivos[nome]);
+
+    if (editor) {
+        editor.setValue(arquivos[nome]);
+    }
 
     atualizarExplorador();
     status.textContent = "Editando " + nome;
@@ -137,7 +149,7 @@ function criarArquivo() {
     const nomeFinal = nome.trim();
 
     if (!/^[a-zA-Z0-9_-]+\.lp$/.test(nomeFinal)) {
-        alert("O nome precisa terminar em .lp");
+        alert("O arquivo precisa terminar em .lp");
         return;
     }
 
@@ -147,17 +159,21 @@ function criarArquivo() {
     }
 
     arquivos[nomeFinal] = "";
+
     abrirArquivo(nomeFinal);
     salvarProjeto();
 
     escreverSaida("Arquivo criado: " + nomeFinal);
 }
 
+/* EXECUÇÃO */
+
 function executarProjeto() {
     salvarProjeto();
 
     try {
         const codigo = LipiMotor.montarProjeto(editor.getValue());
+
         preview.srcdoc = codigo;
 
         escreverSaida("Arquivo " + arquivoAtual + " executado.");
@@ -168,7 +184,72 @@ function executarProjeto() {
     }
 }
 
-/* REGISTRO DA LINGUAGEM */
+/* APARÊNCIA DAS SUGESTÕES */
+
+function corrigirVisualSugestoes() {
+    const estilo = document.createElement("style");
+
+    estilo.id = "lipibr-suggest-fix";
+
+    estilo.textContent = `
+        .monaco-editor .suggest-widget {
+            min-width: 400px !important;
+            width: 400px !important;
+        }
+
+        .monaco-editor .suggest-widget .monaco-list-row {
+            height: 25px !important;
+            line-height: 25px !important;
+        }
+
+        .monaco-editor .suggest-widget .monaco-list-row .contents {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+        }
+
+        .monaco-editor .suggest-widget .monaco-list-row .main {
+            display: flex !important;
+            align-items: center !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+        }
+
+        .monaco-editor .suggest-widget .monaco-icon-label {
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: auto !important;
+            overflow: visible !important;
+        }
+
+        .monaco-editor .suggest-widget .label-name,
+        .monaco-editor .suggest-widget .monaco-icon-name-container,
+        .monaco-editor .suggest-widget .monaco-icon-label-container {
+            display: inline !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: #ffffff !important;
+            font-size: 13px !important;
+        }
+
+        .monaco-editor .suggest-widget .details {
+            color: #bbbbbb !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .monaco-editor .suggest-widget .monaco-list-row .right {
+            color: #aaaaaa !important;
+        }
+    `;
+
+    document.head.appendChild(estilo);
+}
+
+/* LINGUAGEM LIPIBR */
 
 function registrarLipi() {
     monaco.languages.register({
@@ -185,8 +266,7 @@ function registrarLipi() {
                 [/="[^"]*"/, "attribute.value"],
                 [/'[^']*'/, "attribute.value"],
                 [/>/, "delimiter"],
-                [/=/, "delimiter"],
-                [/[{}]/, "delimiter"]
+                [/=/, "delimiter"]
             ],
 
             comment: [
@@ -229,69 +309,89 @@ function registrarSugestoes() {
 
         provideCompletionItems(modelo, posicao) {
             const linha = modelo.getLineContent(posicao.lineNumber);
-            const antes = linha.slice(0, posicao.column - 1);
+            const antes = linha.substring(0, posicao.column - 1);
 
-            let sugestoes = [];
+            const palavra = modelo.getWordUntilPosition(posicao);
 
-            const dentroDeTag = antes.match(/<([\wÀ-ÿ_-]+)\s+([\wÀ-ÿ_-]*)$/);
-            const depoisDoIgual = antes.match(/([\wÀ-ÿ_-]+)\s*=\s*["']?([\wÀ-ÿ_-]*)$/);
+            const intervalo = new monaco.Range(
+                posicao.lineNumber,
+                palavra.startColumn,
+                posicao.lineNumber,
+                palavra.endColumn
+            );
+
+            let itens = [];
+
+            const depoisDoIgual = antes.match(
+                /([\wÀ-ÿ_-]+)\s*=\s*["']?([\wÀ-ÿ_-]*)$/
+            );
+
+            const dentroDaTag = antes.match(
+                /<([\wÀ-ÿ_-]+)\s+([\wÀ-ÿ_-]*)$/
+            );
+
+            const digitandoTag = antes.match(
+                /<([\wÀ-ÿ_-]*)$/
+            );
 
             if (depoisDoIgual) {
                 const atributo = depoisDoIgual[1];
 
-                const valores = valoresAtributos[atributo] || [];
-
-                sugestoes = valores.map((valor, indice) => ({
+                itens = (valoresAtributos[atributo] || []).map(valor => ({
                     label: valor,
                     filterText: valor,
                     insertText: valor,
-                    detail: "Valor de " + atributo,
-                    documentation: "Valor disponível na linguagem LipiBR.",
+                    detail: "Valor do atributo " + atributo,
                     kind: monaco.languages.CompletionItemKind.Value,
-                    sortText: String(indice).padStart(3, "0")
+                    range: intervalo
                 }));
 
-            } else if (dentroDeTag) {
-                sugestoes = atributos.map((atributo, indice) => ({
+            } else if (dentroDaTag) {
+                itens = atributos.map((atributo, indice) => ({
                     label: atributo,
                     filterText: atributo,
                     insertText: atributo + '="$1"',
                     insertTextRules:
                         monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                    detail: "Atributo LipiBR",
+                    detail: "Atributo da linguagem LipiBR",
                     documentation: "Atributo escrito em português.",
                     kind: monaco.languages.CompletionItemKind.Property,
-                    sortText: String(indice).padStart(3, "0")
+                    sortText: String(indice).padStart(3, "0"),
+                    range: intervalo
                 }));
 
-            } else if (antes.endsWith("<")) {
-                sugestoes = tags.map((tag, indice) => ({
+            } else if (digitandoTag) {
+                itens = tags.map((tag, indice) => ({
                     label: tag,
                     filterText: tag,
                     insertText: tag,
                     detail: "Tag LipiBR",
                     documentation: "Elemento da linguagem LipiBR.",
                     kind: monaco.languages.CompletionItemKind.Keyword,
-                    sortText: String(indice).padStart(3, "0")
+                    sortText: String(indice).padStart(3, "0"),
+                    range: intervalo
                 }));
 
             } else {
-                sugestoes = tags.map((tag, indice) => ({
+                itens = tags.map((tag, indice) => ({
                     label: tag,
                     filterText: tag,
                     insertText: tag,
                     detail: "Tag LipiBR",
                     kind: monaco.languages.CompletionItemKind.Keyword,
-                    sortText: String(indice).padStart(3, "0")
+                    sortText: String(indice).padStart(3, "0"),
+                    range: intervalo
                 }));
             }
 
-            return { suggestions: sugestoes };
+            return {
+                suggestions: itens
+            };
         }
     });
 }
 
-/* FECHAMENTO AUTOMÁTICO DE TAGS */
+/* FECHAMENTO AUTOMÁTICO */
 
 function registrarFechamentoAutomatico() {
     editor.onDidType((caractere) => {
@@ -301,10 +401,13 @@ function registrarFechamentoAutomatico() {
 
         const modelo = editor.getModel();
         const posicao = editor.getPosition();
-        const linha = modelo.getLineContent(posicao.lineNumber);
-        const antes = linha.slice(0, posicao.column - 1);
 
-        const encontrado = antes.match(/<([\wÀ-ÿ_-]+)(?:\s[^<>]*)?$/);
+        const linha = modelo.getLineContent(posicao.lineNumber);
+        const antes = linha.substring(0, posicao.column - 1);
+
+        const encontrado = antes.match(
+            /<([\wÀ-ÿ_-]+)(?:\s[^<>]*)?$/
+        );
 
         if (!encontrado) return;
 
@@ -314,13 +417,9 @@ function registrarFechamentoAutomatico() {
             return;
         }
 
-        const depois = linha.slice(posicao.column - 1);
+        const depois = linha.substring(posicao.column - 1);
 
-        if (depois.startsWith("</")) {
-            return;
-        }
-
-        const fechamento = "</" + nomeTag + ">";
+        if (depois.startsWith("</")) return;
 
         completandoFechamento = true;
 
@@ -331,10 +430,11 @@ function registrarFechamentoAutomatico() {
                 posicao.lineNumber,
                 posicao.column
             ),
-            text: fechamento
+            text: "</" + nomeTag + ">"
         }]);
 
         editor.setPosition(posicao);
+
         completandoFechamento = false;
     });
 }
@@ -343,15 +443,9 @@ function registrarFechamentoAutomatico() {
 
 function iniciarStudio() {
     if (typeof require === "undefined") {
-        escreverSaida("Não foi possível carregar o Monaco Editor. Verifique sua conexão.");
+        escreverSaida("Não foi possível carregar o Monaco Editor.");
         return;
     }
-
-    require.config({
-        paths: {
-            vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
-        }
-    });
 
     window.MonacoEnvironment = {
         getWorkerUrl: function () {
@@ -359,25 +453,30 @@ function iniciarStudio() {
                 self.MonacoEnvironment = {
                     baseUrl: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/"
                 };
+
                 importScripts(
                     "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/base/worker/workerMain.js"
                 );
             `;
 
             return URL.createObjectURL(
-                new Blob([codigo], { type: "text/javascript" })
+                new Blob([codigo], {
+                    type: "text/javascript"
+                })
             );
         }
     };
 
-    require(["vs/editor/editor.main"], function () {
-        registrarLipi();
-        registrarSugestoes();
-        carregarProjeto();
-
-        if (!arquivos["inicio.lp"] && Object.keys(arquivos).length === 0) {
-            arquivos["inicio.lp"] = "";
+    require.config({
+        paths: {
+            vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
         }
+    });
+
+    require(["vs/editor/editor.main"], function () {
+
+        carregarProjeto();
+        registrarLipi();
 
         editor = monaco.editor.create(
             document.getElementById("editor"),
@@ -395,23 +494,27 @@ function iniciarStudio() {
                 autoClosingBrackets: "always",
                 autoClosingQuotes: "always",
                 autoIndent: "full",
+
                 quickSuggestions: {
                     other: true,
                     comments: false,
                     strings: true
                 },
+
                 suggestOnTriggerCharacters: true,
+
                 suggest: {
                     showIcons: true,
                     showWords: true,
-                    preview: true,
-                    insertMode: "insert",
+                    preview: false,
                     filterGraceful: true,
                     localityBonus: false
                 }
             }
         );
 
+        corrigirVisualSugestoes();
+        registrarSugestoes();
         registrarFechamentoAutomatico();
 
         editor.onDidChangeModelContent(() => {
@@ -426,7 +529,11 @@ function iniciarStudio() {
 
         editor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space,
-            () => editor.trigger("teclado", "editor.action.triggerSuggest", {})
+            () => editor.trigger(
+                "teclado",
+                "editor.action.triggerSuggest",
+                {}
+            )
         );
 
         editor.addCommand(
@@ -434,15 +541,17 @@ function iniciarStudio() {
             executarProjeto
         );
 
-        abrirArquivo("inicio.lp");
+        atualizarExplorador();
+        abrirArquivo(arquivoAtual);
 
         escreverSaida(
-            "LipiBR Studio pronto.\n" +
-            "Digite < para ver as tags disponíveis.\n" +
-            "Use Ctrl + Espaço para abrir as sugestões."
+            "LipiBR Studio iniciado.\n" +
+            "Digite < para ver as tags.\n" +
+            "Ctrl + Espaço abre as sugestões."
         );
+
     }, function () {
-        escreverSaida("Falha ao carregar o Monaco Editor. Verifique sua conexão.");
+        escreverSaida("Erro ao carregar o Monaco Editor.");
     });
 }
 
