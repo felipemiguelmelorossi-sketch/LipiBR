@@ -242,6 +242,35 @@ button.primary {
         border-bottom: 1px solid #303030;
     }
 }
+
+    /* CORREÇÃO: texto das sugestões do Monaco */
+.monaco-editor .suggest-widget {
+    min-width: 400px !important;
+}
+
+.monaco-editor .suggest-widget .monaco-list-row .contents {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.monaco-editor .suggest-widget .monaco-icon-label {
+    display: inline-flex !important;
+    visibility: visible !important;
+    width: auto !important;
+}
+
+.monaco-editor .suggest-widget .monaco-icon-label .label-name {
+    display: inline !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #ffffff !important;
+    font-size: 13px !important;
+}
+
+.monaco-editor .suggest-widget .details {
+    color: #bbbbbb !important;
+}
 </style>
 </head>
 
