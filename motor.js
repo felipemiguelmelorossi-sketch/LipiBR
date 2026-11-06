@@ -1,10 +1,6 @@
 window.LipiMotor = (() => {
 
     const tags = {
-        documento: "html",
-        configuracao: "head",
-        corpo: "body",
-        titulo_pagina: "title",
         cabecalho: "header",
         rodape: "footer",
         principal: "main",
@@ -57,14 +53,18 @@ window.LipiMotor = (() => {
         rotulo: "for"
     };
 
+    const tagsSemFechamento = [
+        "imagem", "entrada", "quebra", "linha"
+    ];
+
     function traduzir(codigo) {
         let resultado = codigo;
 
         resultado = resultado.replace(
-            /(<\/?)([a-zA-ZÀ-ÿ_][\wÀ-ÿ-]*)/g,
+            /(<\/?)([a-zA-ZÀ-ÿ_][\wÀ-ÿ_-]*)/g,
             (trecho, abertura, nome) => {
-                const nomeOriginal = nome.toLowerCase();
-                return abertura + (tags[nomeOriginal] || nome);
+                const traducao = tags[nome.toLowerCase()];
+                return abertura + (traducao || nome);
             }
         );
 
@@ -92,6 +92,9 @@ ${html}
     }
 
     return {
+        tags,
+        atributos,
+        tagsSemFechamento,
         traduzir,
         montarProjeto
     };
